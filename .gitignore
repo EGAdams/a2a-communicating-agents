@@ -1,0 +1,10 @@
+logs/
+storage/
+node_modules/
+.claude/
+.env
+*.pyc
+__pycache__/
+.venv
+*.backup
+hello_world

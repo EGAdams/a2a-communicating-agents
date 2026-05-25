@@ -1,0 +1,304 @@
+[     104ms] [INFO] [webpack-dev-server] Server started: Hot Module Replacement enabled, Live Reloading enabled, Progress disabled, Overlay enabled. @ http://localhost:8080/dist/bundle.js:4929
+[     110ms] [LOG] [HMR] Waiting for update signal from WDS... @ http://localhost:8080/dist/bundle.js:6533
+[     119ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     119ms] [LOG] monitored_object_id: OrchestratorAgent_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     124ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     124ms] [LOG] monitored_object_id: OrchestratorAgent_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     125ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     125ms] [LOG] monitored_object_id: CoderAgent_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     125ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     125ms] [LOG] monitored_object_id: CoderAgent_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     125ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     126ms] [LOG] monitored_object_id: ErrorFormat_ResultSubtype_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     126ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     126ms] [LOG] monitored_object_id: ErrorFormat_ResultSubtype_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     126ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     126ms] [LOG] monitored_object_id: ErrorFormat_StopReason_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     126ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     127ms] [LOG] monitored_object_id: ErrorFormat_StopReason_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     127ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     127ms] [LOG] monitored_object_id: ErrorFormat_ApiError_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     127ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     127ms] [LOG] monitored_object_id: ErrorFormat_ApiError_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     127ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     128ms] [LOG] monitored_object_id: ErrorFormat_ErrorSubtypeCheck_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     128ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     128ms] [LOG] monitored_object_id: ErrorFormat_ErrorSubtypeCheck_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     128ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     128ms] [LOG] monitored_object_id: ErrorFormat_ConflictDetail_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     128ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     128ms] [LOG] monitored_object_id: ErrorFormat_ConflictDetail_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     128ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     128ms] [LOG] monitored_object_id: ErrorFormat_ApprovalDetail_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     129ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     129ms] [LOG] monitored_object_id: ErrorFormat_ApprovalDetail_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     129ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     129ms] [LOG] monitored_object_id: HeadlessInput_InitControl_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     129ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     129ms] [LOG] monitored_object_id: HeadlessInput_InitControl_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     130ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     130ms] [LOG] monitored_object_id: HeadlessInput_UserMessage_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     130ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     130ms] [LOG] monitored_object_id: HeadlessInput_UserMessage_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     130ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     130ms] [LOG] monitored_object_id: HeadlessInput_MultiTurn_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     130ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     130ms] [LOG] monitored_object_id: HeadlessInput_MultiTurn_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     130ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     131ms] [LOG] monitored_object_id: HeadlessInput_Interrupt_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     131ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     131ms] [LOG] monitored_object_id: HeadlessInput_Interrupt_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     131ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     131ms] [LOG] monitored_object_id: HeadlessInput_RecoverApprovals_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     132ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     132ms] [LOG] monitored_object_id: HeadlessInput_RecoverApprovals_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     132ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     132ms] [LOG] monitored_object_id: HeadlessInput_RecoverMismatch_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     132ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     132ms] [LOG] monitored_object_id: HeadlessInput_RecoverMismatch_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     132ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     132ms] [LOG] monitored_object_id: HeadlessInput_PartialMessages_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     133ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     133ms] [LOG] monitored_object_id: HeadlessInput_PartialMessages_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     133ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     133ms] [LOG] monitored_object_id: HeadlessInput_UnknownControl_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     133ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     133ms] [LOG] monitored_object_id: HeadlessInput_UnknownControl_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     133ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     133ms] [LOG] monitored_object_id: HeadlessInput_InvalidJson_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     133ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     133ms] [LOG] monitored_object_id: HeadlessInput_InvalidJson_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     133ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     134ms] [LOG] monitored_object_id: HeadlessInput_TaskTool_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     134ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     134ms] [LOG] monitored_object_id: HeadlessInput_TaskTool_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     134ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     134ms] [LOG] monitored_object_id: HeadlessInput_TaskToolQueue_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     134ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     134ms] [LOG] monitored_object_id: HeadlessInput_TaskToolQueue_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     134ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     134ms] [LOG] monitored_object_id: HeadlessInput_InitThenUser_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     135ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     135ms] [LOG] monitored_object_id: HeadlessInput_InitThenUser_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     135ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     135ms] [LOG] monitored_object_id: StreamJson_InitMessage_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     135ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     135ms] [LOG] monitored_object_id: StreamJson_InitMessage_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     135ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     135ms] [LOG] monitored_object_id: StreamJson_SessionIdUuid_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     135ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     135ms] [LOG] monitored_object_id: StreamJson_SessionIdUuid_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     135ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     136ms] [LOG] monitored_object_id: StreamJson_ResultFormat_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     136ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     136ms] [LOG] monitored_object_id: StreamJson_ResultFormat_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     136ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     136ms] [LOG] monitored_object_id: StreamJson_PartialMessages_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     136ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     136ms] [LOG] monitored_object_id: StreamJson_PartialMessages_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     136ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     137ms] [LOG] monitored_object_id: StreamJson_NoPartialMessages_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     137ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     137ms] [LOG] monitored_object_id: StreamJson_NoPartialMessages_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     137ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     137ms] [LOG] monitored_object_id: StartupFlow_AgentNotFound_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     137ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     138ms] [LOG] monitored_object_id: StartupFlow_AgentNotFound_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     138ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     138ms] [LOG] monitored_object_id: StartupFlow_ConvNotFound_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     138ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     138ms] [LOG] monitored_object_id: StartupFlow_ConvNotFound_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     138ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     138ms] [LOG] monitored_object_id: StartupFlow_ImportNotFound_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     139ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     139ms] [LOG] monitored_object_id: StartupFlow_ImportNotFound_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     139ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     139ms] [LOG] monitored_object_id: StartupFlow_NewAgent_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     139ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     139ms] [LOG] monitored_object_id: StartupFlow_NewAgent_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     139ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     139ms] [LOG] monitored_object_id: StartupFlow_ValidAgent_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     140ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     140ms] [LOG] monitored_object_id: StartupFlow_ValidAgent_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     140ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     140ms] [LOG] monitored_object_id: StartupFlow_ValidConv_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     140ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     140ms] [LOG] monitored_object_id: StartupFlow_ValidConv_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     140ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     140ms] [LOG] monitored_object_id: StartupFlow_SerializedConvId_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     140ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     140ms] [LOG] monitored_object_id: StartupFlow_SerializedConvId_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     140ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     140ms] [LOG] monitored_object_id: StartupFlow_DefaultConv_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     141ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     141ms] [LOG] monitored_object_id: StartupFlow_DefaultConv_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     141ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     141ms] [LOG] monitored_object_id: StartupFlow_InitBlocksNone_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     141ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     141ms] [LOG] monitored_object_id: StartupFlow_InitBlocksNone_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     141ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     141ms] [LOG] monitored_object_id: StartupFlow_NoPrompt_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     142ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     142ms] [LOG] monitored_object_id: StartupFlow_NoPrompt_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     142ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     142ms] [LOG] monitored_object_id: StartupFlow_StaleConvFallback_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     142ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     142ms] [LOG] monitored_object_id: StartupFlow_StaleConvFallback_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     142ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     142ms] [LOG] monitored_object_id: LazyApproval_ConcurrentMessage_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     142ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     142ms] [LOG] monitored_object_id: LazyApproval_ConcurrentMessage_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     142ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     142ms] [LOG] monitored_object_id: PrestreamApproval_Recovery_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     143ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     143ms] [LOG] monitored_object_id: PrestreamApproval_Recovery_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     143ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     143ms] [LOG] monitored_object_id: OAuthHealthCheck_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     143ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     143ms] [LOG] monitored_object_id: OAuthHealthCheck_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     143ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     143ms] [LOG] monitored_object_id: ScissariTestLogger_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     144ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     144ms] [LOG] monitored_object_id: ScissariTestLogger_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     144ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     144ms] [LOG] monitored_object_id: ScissariMessagePersistence_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     144ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     144ms] [LOG] monitored_object_id: ScissariMessagePersistence_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     144ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     144ms] [LOG] monitored_object_id: ScissariHaileyInteraction_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     144ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     144ms] [LOG] monitored_object_id: ScissariHaileyInteraction_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     144ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     145ms] [LOG] monitored_object_id: ScissariToolParity_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     145ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     145ms] [LOG] monitored_object_id: ScissariToolParity_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     145ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     145ms] [LOG] monitored_object_id: ToolAttach_Lifecycle_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     145ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     145ms] [LOG] monitored_object_id: ToolAttach_Lifecycle_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     145ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     146ms] [LOG] monitored_object_id: LetabotMetaSuppression_SimpleQ_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     146ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     146ms] [LOG] monitored_object_id: LetabotMetaSuppression_SimpleQ_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     146ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     146ms] [LOG] monitored_object_id: LetabotMetaSuppression_WebSearch_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     146ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     146ms] [LOG] monitored_object_id: LetabotMetaSuppression_WebSearch_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     146ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     146ms] [LOG] monitored_object_id: ScissariPlanningModeHang_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     147ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     147ms] [LOG] monitored_object_id: ScissariPlanningModeHang_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     147ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     147ms] [LOG] monitored_object_id: ScissariInactivityTimeout_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     147ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     147ms] [LOG] monitored_object_id: ScissariInactivityTimeout_2026 @ http://localhost:8080/dist/bundle.js:1859
+[     147ms] [LOG] constructing accordion... @ http://localhost:8080/dist/bundle.js:1839
+[     147ms] [LOG] monitored_object_id: ScissariToolExecutionHang_2026 @ http://localhost:8080/dist/bundle.js:1842
+[     148ms] [LOG] accordion-section connected @ http://localhost:8080/dist/bundle.js:1858
+[     148ms] [LOG] monitored_object_id: ScissariToolExecutionHang_2026 @ http://localhost:8080/dist/bundle.js:1859
+[ 2406728ms] [INFO] [webpack-dev-server] Disconnected! @ http://localhost:8080/dist/bundle.js:4929
+[ 2406768ms] [INFO] [webpack-dev-server] Trying to reconnect... @ http://localhost:8080/dist/bundle.js:4929
+[ 2409876ms] [INFO] [webpack-dev-server] Disconnected! @ http://localhost:8080/dist/bundle.js:4929
+[ 2413720ms] [INFO] [webpack-dev-server] Trying to reconnect... @ http://localhost:8080/dist/bundle.js:4929
+[ 2435088ms] [INFO] [webpack-dev-server] Disconnected! @ http://localhost:8080/dist/bundle.js:4929
+[ 2435090ms] [INFO] [webpack-dev-server] Trying to reconnect... @ http://localhost:8080/dist/bundle.js:4929
+[ 2436198ms] [ERROR] WebSocket connection to 'ws://localhost:8080/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:8080/dist/bundle.js:4055
+[ 2436200ms] [ERROR] [webpack-dev-server] Event @ http://localhost:8080/dist/bundle.js:4937
+[ 2436205ms] [INFO] [webpack-dev-server] Trying to reconnect... @ http://localhost:8080/dist/bundle.js:4929
+[ 2438288ms] [ERROR] WebSocket connection to 'ws://localhost:8080/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:8080/dist/bundle.js:4055
+[ 2438289ms] [ERROR] [webpack-dev-server] Event @ http://localhost:8080/dist/bundle.js:4937
+[ 2438291ms] [INFO] [webpack-dev-server] Trying to reconnect... @ http://localhost:8080/dist/bundle.js:4929
+[ 2443572ms] [ERROR] WebSocket connection to 'ws://localhost:8080/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:8080/dist/bundle.js:4055
+[ 2443572ms] [ERROR] [webpack-dev-server] Event @ http://localhost:8080/dist/bundle.js:4937
+[ 2443572ms] [INFO] [webpack-dev-server] Trying to reconnect... @ http://localhost:8080/dist/bundle.js:4929
+[ 2451692ms] [ERROR] WebSocket connection to 'ws://localhost:8080/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:8080/dist/bundle.js:4055
+[ 2451693ms] [ERROR] [webpack-dev-server] Event @ http://localhost:8080/dist/bundle.js:4937
+[ 2451695ms] [INFO] [webpack-dev-server] Trying to reconnect... @ http://localhost:8080/dist/bundle.js:4929
+[ 2467801ms] [ERROR] WebSocket connection to 'ws://localhost:8080/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:8080/dist/bundle.js:4055
+[ 2467801ms] [ERROR] [webpack-dev-server] Event @ http://localhost:8080/dist/bundle.js:4937
+[ 2467803ms] [INFO] [webpack-dev-server] Trying to reconnect... @ http://localhost:8080/dist/bundle.js:4929
+[ 2488169ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=OrchestratorAgent_2026 request failed. Backing off for 2000ms. AbortError: The user aborted a request. @ http://localhost:8080/dist/bundle.js:3175
+[ 2489158ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=CoderAgent_2026 request failed. Backing off for 2000ms. AbortError: The user aborted a request. @ http://localhost:8080/dist/bundle.js:3175
+[ 2489325ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ErrorFormat_ResultSubtype_2026 request failed. Backing off for 2000ms. AbortError: The user aborted a request. @ http://localhost:8080/dist/bundle.js:3175
+[ 2489353ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ErrorFormat_StopReason_2026 request failed. Backing off for 2000ms. AbortError: The user aborted a request. @ http://localhost:8080/dist/bundle.js:3175
+[ 2489355ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ErrorFormat_ApiError_2026 request failed. Backing off for 2000ms. AbortError: The user aborted a request. @ http://localhost:8080/dist/bundle.js:3175
+[ 2489359ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ErrorFormat_ErrorSubtypeCheck_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2489419ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ErrorFormat_ConflictDetail_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2489471ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ErrorFormat_ApprovalDetail_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2489509ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=HeadlessInput_InitControl_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2489512ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=HeadlessInput_UserMessage_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2489524ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=HeadlessInput_MultiTurn_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2490707ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=StreamJson_PartialMessages_2026 request failed. Backing off for 2000ms. AbortError: The user aborted a request. @ http://localhost:8080/dist/bundle.js:3175
+[ 2490722ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=StreamJson_NoPartialMessages_2026 request failed. Backing off for 2000ms. AbortError: The user aborted a request. @ http://localhost:8080/dist/bundle.js:3175
+[ 2490754ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=StartupFlow_AgentNotFound_2026 request failed. Backing off for 2000ms. AbortError: The user aborted a request. @ http://localhost:8080/dist/bundle.js:3175
+[ 2490812ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=StartupFlow_ConvNotFound_2026 request failed. Backing off for 2000ms. AbortError: The user aborted a request. @ http://localhost:8080/dist/bundle.js:3175
+[ 2490893ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=StartupFlow_ImportNotFound_2026 request failed. Backing off for 2000ms. AbortError: The user aborted a request. @ http://localhost:8080/dist/bundle.js:3175
+[ 2490967ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=StartupFlow_NewAgent_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2490992ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=StartupFlow_ValidAgent_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491038ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=StartupFlow_ValidConv_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491079ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=StartupFlow_SerializedConvId_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491082ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=StartupFlow_DefaultConv_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491169ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=StartupFlow_InitBlocksNone_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491171ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=StartupFlow_NoPrompt_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491242ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=StartupFlow_StaleConvFallback_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491277ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=LazyApproval_ConcurrentMessage_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491326ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=PrestreamApproval_Recovery_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491360ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=OAuthHealthCheck_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491362ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ScissariTestLogger_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491413ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ScissariMessagePersistence_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491454ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ScissariHaileyInteraction_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491463ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ScissariToolParity_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491466ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ToolAttach_Lifecycle_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491513ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=LetabotMetaSuppression_SimpleQ_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491556ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=LetabotMetaSuppression_WebSearch_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491558ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ScissariPlanningModeHang_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491559ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ScissariInactivityTimeout_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2491594ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ScissariToolExecutionHang_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 2499942ms] [ERROR] WebSocket connection to 'ws://localhost:8080/ws' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:8080/dist/bundle.js:4055
+[ 2499943ms] [ERROR] [webpack-dev-server] Event @ http://localhost:8080/dist/bundle.js:4937
+[ 2499944ms] [INFO] [webpack-dev-server] Trying to reconnect... @ http://localhost:8080/dist/bundle.js:4929
+[ 2564040ms] [ERROR] WebSocket connection to 'ws://localhost:8080/ws' failed: Error during WebSocket handshake: Unexpected response code: 403 @ http://localhost:8080/dist/bundle.js:4055
+[ 2564047ms] [ERROR] [webpack-dev-server] Event @ http://localhost:8080/dist/bundle.js:4937
+[ 2564072ms] [INFO] [webpack-dev-server] Trying to reconnect... @ http://localhost:8080/dist/bundle.js:4929
+[ 2692140ms] [ERROR] WebSocket connection to 'ws://localhost:8080/ws' failed: Error during WebSocket handshake: Unexpected response code: 403 @ http://localhost:8080/dist/bundle.js:4055
+[ 2692140ms] [ERROR] [webpack-dev-server] Event @ http://localhost:8080/dist/bundle.js:4937
+[ 2692140ms] [INFO] [webpack-dev-server] Trying to reconnect... @ http://localhost:8080/dist/bundle.js:4929
+[ 2948196ms] [ERROR] WebSocket connection to 'ws://localhost:8080/ws' failed: Error during WebSocket handshake: Unexpected response code: 403 @ http://localhost:8080/dist/bundle.js:4055
+[ 2948202ms] [ERROR] [webpack-dev-server] Event @ http://localhost:8080/dist/bundle.js:4937
+[ 2948203ms] [INFO] [webpack-dev-server] Trying to reconnect... @ http://localhost:8080/dist/bundle.js:4929
+[ 3428715ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=CoderAgent_2026 request failed. Backing off for 2000ms. AbortError: The user aborted a request. @ http://localhost:8080/dist/bundle.js:3175
+[ 3428815ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ErrorFormat_ResultSubtype_2026 request failed. Backing off for 2000ms. AbortError: The user aborted a request. @ http://localhost:8080/dist/bundle.js:3175
+[ 3428818ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ErrorFormat_StopReason_2026 request failed. Backing off for 2000ms. AbortError: The user aborted a request. @ http://localhost:8080/dist/bundle.js:3175
+[ 3428821ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ErrorFormat_ApiError_2026 request failed. Backing off for 2000ms. AbortError: The user aborted a request. @ http://localhost:8080/dist/bundle.js:3175
+[ 3428822ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ErrorFormat_ErrorSubtypeCheck_2026 request failed. Backing off for 2000ms. AbortError: signal is aborted without reason
+    at http://localhost:8080/dist/bundle.js:3123:55 @ http://localhost:8080/dist/bundle.js:3175
+[ 3461408ms] [ERROR] WebSocket connection to 'ws://localhost:8080/ws' failed: Error during WebSocket handshake: Unexpected response code: 403 @ http://localhost:8080/dist/bundle.js:4055
+[ 3461454ms] [ERROR] [webpack-dev-server] Event @ http://localhost:8080/dist/bundle.js:4937
+[ 3492744ms] [ERROR] [FetchRunner] http://100.80.49.10:8284/libraries/local-php-api/object/select?object_view_id=ErrorFormat_ResultSubtype_2026 request failed. Backing off for 2000ms. AbortError: The user aborted a request. @ http://localhost:8080/dist/bundle.js:3175

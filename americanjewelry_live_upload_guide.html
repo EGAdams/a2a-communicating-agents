@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AmericanSJewelry Live Upload Guide</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.5; margin: 24px; max-width: 980px; }
+    code, pre { background: #f6f8fa; padding: 2px 6px; border-radius: 4px; }
+    pre { padding: 12px; overflow-x: auto; }
+    h1, h2 { margin-top: 1.2em; }
+    .ok { color: #0a7a2f; font-weight: 700; }
+    .warn { color: #a15c00; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Live Upload Guide (american​sjewelry.com)</h1>
+  <p><strong>Purpose:</strong> publish/update public files (example: <code>status.html</code>) in <code>public_html</code>.</p>
+  <p><strong>Last Updated:</strong> 2026-05-24 03:46 UTC</p>
+
+  <h2>Server + Path</h2>
+  <ul>
+    <li>Host: <code>americansjewelry.com</code></li>
+    <li>User: <code>tinman72</code></li>
+    <li>Web root: <code>/home1/tinman72/public_html/</code></li>
+    <li>Live URL pattern: <code>https://americansjewelry.com/&lt;filename&gt;</code></li>
+  </ul>
+
+  <h2>Quick Publish (single file)</h2>
+  <pre><code># Local file example
+LOCAL_FILE="/path/to/status.html"
+
+# Upload
+scp -o StrictHostKeyChecking=accept-new "$LOCAL_FILE" \
+  tinman72@americansjewelry.com:public_html/status.html
+
+# Verify on server
+ssh -o StrictHostKeyChecking=accept-new tinman72@americansjewelry.com \
+  "ls -l public_html/status.html && echo URL=https://americansjewelry.com/status.html"</code></pre>
+
+  <h2>Recommended Safe Workflow</h2>
+  <ol>
+    <li>Back up current live file first.</li>
+    <li>Upload new file.</li>
+    <li>Check URL in browser (hard refresh).</li>
+    <li>If bad deploy, restore backup.</li>
+  </ol>
+
+  <pre><code># 1) Backup live file
+ssh tinman72@americansjewelry.com \
+  "cp public_html/status.html public_html/status.html.bak.$(date +%Y%m%d-%H%M%S)"
+
+# 2) Upload new file
+scp /path/to/status.html tinman72@americansjewelry.com:public_html/status.html
+
+# 3) Verify
+ssh tinman72@americansjewelry.com "ls -l public_html/status.html"
+
+# 4) Rollback example (if needed)
+ssh tinman72@americansjewelry.com \
+  "cp public_html/status.html.bak.YYYYMMDD-HHMMSS public_html/status.html"</code></pre>
+
+  <h2>Troubleshooting</h2>
+  <ul>
+    <li><span class="warn">Permission denied:</span> confirm correct SSH key/user and server access.</li>
+    <li><span class="warn">Page not updating:</span> hard refresh browser (<code>Ctrl+F5</code>) and verify file timestamp on server.</li>
+    <li><span class="warn">Wrong path:</span> ensure target is <code>public_html/</code>, not home dir root.</li>
+    <li><span class="ok">Success check:</span> open <code>https://americansjewelry.com/status.html</code> and confirm latest timestamp/content.</li>
+  </ul>
+
+  <h2>Current Live Status Page</h2>
+  <p><a href="https://americansjewelry.com/status.html">https://americansjewelry.com/status.html</a></p>
+</body>
+</html>

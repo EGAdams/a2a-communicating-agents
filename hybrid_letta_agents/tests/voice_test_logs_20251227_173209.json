@@ -1,0 +1,22 @@
+{
+  "test_timestamp": "2025-12-27T17:32:21.900006",
+  "browser_console_logs": [
+    {
+      "timestamp": "2025-12-27T17:32:11.428880",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (File not found)"
+    }
+  ],
+  "browser_errors": [],
+  "network_requests": [
+    {
+      "timestamp": "2025-12-27T17:32:11.366468",
+      "url": "http://localhost:9000/",
+      "method": "GET",
+      "resource_type": "document"
+    }
+  ],
+  "microphone_events": [],
+  "connection_events": [],
+  "voice_events": []
+}

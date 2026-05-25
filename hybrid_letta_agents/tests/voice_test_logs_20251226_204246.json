@@ -1,0 +1,114 @@
+{
+  "test_timestamp": "2025-12-26T20:42:59.683710",
+  "browser_console_logs": [
+    {
+      "timestamp": "2025-12-26T20:42:53.675395",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "timestamp": "2025-12-26T20:42:53.676347",
+      "type": "log",
+      "text": "Loaded 50 agents"
+    },
+    {
+      "timestamp": "2025-12-26T20:42:54.512964",
+      "type": "log",
+      "text": "\u00f0\u0178\u201d\u2014 Connecting to room: agent-agent-b9-qdd3i on ws://localhost:7880"
+    },
+    {
+      "timestamp": "2025-12-26T20:42:54.527716",
+      "type": "log",
+      "text": "Connection state: connecting"
+    },
+    {
+      "timestamp": "2025-12-26T20:42:54.802818",
+      "type": "log",
+      "text": "\u00e2\u0153\u2026 Signal connection established"
+    },
+    {
+      "timestamp": "2025-12-26T20:42:55.909132",
+      "type": "log",
+      "text": "Connection state: connected"
+    },
+    {
+      "timestamp": "2025-12-26T20:42:55.909631",
+      "type": "log",
+      "text": "\u00e2\u0153\u2026 Room connected successfully"
+    },
+    {
+      "timestamp": "2025-12-26T20:42:55.910797",
+      "type": "log",
+      "text": "\u00f0\u0178\u201c\u00a4 Sent agent selection: agent-b931af35-c692-465a-aa1f-f4f6aed9737b"
+    },
+    {
+      "timestamp": "2025-12-26T20:42:55.911540",
+      "type": "log",
+      "text": "\u00e2\u0153\u2026 Connected to room: test-room"
+    },
+    {
+      "timestamp": "2025-12-26T20:42:55.911741",
+      "type": "log",
+      "text": "\u00f0\u0178\u017d\u00a4 Enabling microphone..."
+    },
+    {
+      "timestamp": "2025-12-26T20:42:55.926000",
+      "type": "error",
+      "text": "\u00e2\u009d\u0152 Connection error: NotFoundError: Requested device not found"
+    }
+  ],
+  "browser_errors": [],
+  "network_requests": [
+    {
+      "timestamp": "2025-12-26T20:42:49.915232",
+      "url": "http://localhost:9000/",
+      "method": "GET",
+      "resource_type": "document"
+    },
+    {
+      "timestamp": "2025-12-26T20:42:49.963948",
+      "url": "https://esm.sh/livekit-client@2.9.7",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "timestamp": "2025-12-26T20:42:50.118772",
+      "url": "https://esm.sh/node/process.mjs",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "timestamp": "2025-12-26T20:42:50.119079",
+      "url": "https://esm.sh/livekit-client@2.9.7/es2022/livekit-client.mjs",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "timestamp": "2025-12-26T20:42:50.424563",
+      "url": "https://esm.sh/node/events.mjs",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "timestamp": "2025-12-26T20:42:50.424730",
+      "url": "https://esm.sh/node/tty.mjs",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "timestamp": "2025-12-26T20:42:50.509163",
+      "url": "https://esm.sh/node/async_hooks.mjs",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "timestamp": "2025-12-26T20:42:50.614049",
+      "url": "http://localhost:9000/api/v1/agents/",
+      "method": "GET",
+      "resource_type": "fetch"
+    }
+  ],
+  "microphone_events": [],
+  "connection_events": [],
+  "voice_events": []
+}

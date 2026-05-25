@@ -1,0 +1,29 @@
+{
+  "source_settings_local": "/home/adamsl/.master_claude/settings.local.json",
+  "permissions": {
+    "allow": [
+      "Bash(Select-Object FullName)",
+      "Bash(python:*)",
+      "Bash(letta --help:*)",
+      "Bash(letta server --help:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(curl:*)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "enable_all_project_mcp_servers": true,
+  "enabled_mcpjson_servers": [
+    "chrome-devtools"
+  ],
+  "mcp_servers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-chrome-devtools"
+      ]
+    }
+  }
+}

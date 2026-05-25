@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>A2A Status</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.4; }
+    .ok { color: #0a7a2f; }
+    .warn { color: #a15c00; }
+    .err { color: #b00020; }
+    pre { background: #f6f8fa; padding: 12px; border-radius: 6px; overflow-x: auto; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 14px; margin-bottom: 14px; }
+    a { color: #0366d6; }
+  </style>
+</head>
+<body>
+  <h1>A2A Communication Status</h1>
+  <p><strong>Last updated:</strong> 2026-05-24 23:14 UTC</p>
+
+  <div class="card">
+    <h2>Current result</h2>
+    <ul>
+      <li class="ok">Processes running: websocket_server.py, orchestrator_agent/main.py, jeri_agent/dist/index.js</li>
+      <li class="ok">WebSocket bus listening on port 3030</li>
+      <li class="ok">Message delivered to <code>jeri-agent</code> on topic <code>january-statements</code> — ACK received</li>
+      <li class="ok">Jeri processed incoming tasks (analyze_statement, prepare_report_snippet confirmed in logs)</li>
+      <li class="ok">Thought Bridge running on port 8765 — lettabot (producer) connected</li>
+      <li class="ok">Live thought monitor deployed: <a href="https://americansjewelry.com/monitor_thoughts_plan.html">monitor_thoughts_plan.html</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Fixes applied (2026-05-24)</h2>
+    <ol>
+      <li>Installed missing <code>letta</code> package in the <code>so</code> venv
+        (<code>nonprofit_finance_db/receipt_scanning_tools/venv</code>).</li>
+      <li>Fixed <strong>TransportManager stale-transport bug</strong>:
+        <ul>
+          <li>Root cause: <code>asyncio.run()</code> creates a new event loop each call;
+            the singleton cached a dead <code>_receiver_task</code> and closed WebSocket
+            from the previous run, returning them as "healthy."</li>
+          <li>Fix: health-check in <code>get_transport()</code> — if receiver task is done
+            or WebSocket is closed, force reconnect before returning.</li>
+          <li>Fix: recreate <code>asyncio.Lock</code> when the previous one belongs to a
+            dead event loop.</li>
+        </ul>
+      </li>
+      <li>Fixed <strong>stale ack_queue</strong> in <code>WebSocketTransport.send()</code>:
+        drain leftover ACKs from prior timed-out sends before each new send attempt.</li>
+      <li>Built <strong>Thought Bridge</strong> (<code>thought_bridge.py</code>):
+        <ul>
+          <li>Python asyncio WebSocket server on <code>0.0.0.0:8765</code>.</li>
+          <li>Producer (lettabot) connects → sends <code>{"role":"producer"}</code> → fans out ThoughtEvent JSON.</li>
+          <li>Consumers (browsers via Tailscale <code>100.72.158.63:8765</code>) receive live thoughts.</li>
+          <li>Fixed Node.js 22 bug: built-in WebSocket does not fire <code>close</code> on ECONNREFUSED —
+            only <code>error</code>. Moved reconnect scheduling into <code>error</code> handler.</li>
+        </ul>
+      </li>
+      <li>Added <strong>ThoughtBroadcaster</strong> to <code>lettabot/src/core/thought-broadcaster.ts</code>:
+        singleton WebSocket producer with auto-reconnect, fires on <code>reasoning</code>,
+        <code>tool_call</code>, and <code>tool_result</code> stream events.</li>
+      <li>Implemented <strong>WebSocketThoughtSource</strong> in <code>monitor_thoughts_plan.html</code>:
+        replaces stub with full WebSocket client, auto-reconnect, graceful fallback to mock.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>Stack status</h2>
+    <ul>
+      <li class="ok">websocket_server.py — port 3030</li>
+      <li class="ok">orchestrator_agent/main.py — connected, receiver_running=True</li>
+      <li class="ok">jeri_agent/dist/index.js — connected, subscribed to january-statements</li>
+      <li class="ok">thought_bridge.py — port 8765, lettabot producer connected</li>
+      <li class="ok">lettabot (Scissari) — dist/main.js, agent-5955b0c2, conv-dc095cc7</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Live thought monitor</h2>
+    <p>
+      <a href="https://americansjewelry.com/monitor_thoughts_plan.html">
+        americansjewelry.com/monitor_thoughts_plan.html
+      </a>
+    </p>
+    <ul>
+      <li>Black/white MSI-style terminal, scrolls Scissari's reasoning in real time</li>
+      <li>WebSocket source: <code>ws://100.72.158.63:8765</code> (Tailscale)</li>
+      <li>Falls back to MockThoughtSource when opened as a local file</li>
+      <li>GoF patterns: Strategy (IThoughtSource), Observer (IThoughtObserver), Template Method (AbstractThoughtSource), Facade (ThoughtMonitor)</li>
+    </ul>
+  </div>
+</body>
+</html>

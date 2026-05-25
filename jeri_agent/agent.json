@@ -1,0 +1,116 @@
+{
+  "name": "jeri-agent",
+  "version": "1.0.0",
+  "description": "Financial document specialist for January bank statements. Analyzes statement readiness, extracts transactions, summarizes content, and flags anomalies.",
+  "capabilities": [
+    {
+      "name": "analyze_statement",
+      "description": "Review available statement files and provide parse-readiness summary.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "context": { "type": "object" }
+        },
+        "required": ["description"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string" },
+          "message": { "type": "string" },
+          "details": { "type": "object" }
+        }
+      }
+    },
+    {
+      "name": "extract_transactions",
+      "description": "Extract likely transaction lines from statement files.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "context": { "type": "object" }
+        },
+        "required": ["description"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string" },
+          "message": { "type": "string" },
+          "details": { "type": "object" }
+        }
+      }
+    },
+    {
+      "name": "summarize_statement",
+      "description": "Produce concise summary for statement files.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "context": { "type": "object" }
+        },
+        "required": ["description"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string" },
+          "message": { "type": "string" },
+          "details": { "type": "object" }
+        }
+      }
+    },
+    {
+      "name": "prepare_report_snippet",
+      "description": "Prepare report-ready markdown snippet from statement analysis.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "context": { "type": "object" }
+        },
+        "required": ["description"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string" },
+          "message": { "type": "string" },
+          "details": { "type": "object" },
+          "artifacts": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    {
+      "name": "find_anomalies",
+      "description": "Flag obvious anomalies and parse risks in statement text.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" },
+          "context": { "type": "object" }
+        },
+        "required": ["description"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string" },
+          "message": { "type": "string" },
+          "details": { "type": "object" }
+        }
+      }
+    }
+  ],
+  "topics": [
+    "january-statements",
+    "bank-statements",
+    "readable-documents",
+    "document-analysis"
+  ],
+  "memory_access": "read-write",
+  "runtime": "node"
+}

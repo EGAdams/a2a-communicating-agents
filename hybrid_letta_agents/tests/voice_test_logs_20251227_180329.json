@@ -1,0 +1,220 @@
+{
+  "test_timestamp": "2025-12-27T18:03:43.567501",
+  "browser_console_logs": [
+    {
+      "timestamp": "2025-12-27T18:03:31.816826",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:31.836704",
+      "type": "log",
+      "text": "Loaded 50 agents"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:32.524980",
+      "type": "log",
+      "text": "\u00f0\u0178\u017d\u00a4 Checking microphone availability..."
+    },
+    {
+      "timestamp": "2025-12-27T18:03:32.629724",
+      "type": "log",
+      "text": "\u00e2\u0153\u2026 Found 3 microphone device(s):"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:32.630504",
+      "type": "log",
+      "text": "  1. Fake Default Audio Input (default)"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:32.630837",
+      "type": "log",
+      "text": "  2. Fake Audio Input 1 (d48b025622e057056288b70f0ee56f35eb211e78bb0fc84f92d0aa323df9b7fb)"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:32.631791",
+      "type": "log",
+      "text": "  3. Fake Audio Input 2 (11cca0d8ce8072c838cdc4094c7d1c195af99505287025ddcbd6275e6357b5c8)"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:32.730409",
+      "type": "log",
+      "text": "\u00e2\u0153\u2026 Microphone permissions granted"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:32.733255",
+      "type": "log",
+      "text": "\u00f0\u0178\u201d\u2014 Connecting to room: agent-agent-77-zls6uf on ws://localhost:7880"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:32.734171",
+      "type": "log",
+      "text": "Connection state: connecting"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:32.786829",
+      "type": "log",
+      "text": "\u00e2\u0153\u2026 Signal connection established"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:33.900044",
+      "type": "log",
+      "text": "Connection state: connected"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:33.900205",
+      "type": "log",
+      "text": "\u00e2\u0153\u2026 Room connected successfully"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:33.902832",
+      "type": "log",
+      "text": "\u00f0\u0178\u201c\u00a4 Sent agent selection: agent-777054eb-7abf-42dd-bde7-819f7de6727b"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:33.903500",
+      "type": "log",
+      "text": "\u00e2\u0153\u2026 Connected to room: test-room"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:33.903724",
+      "type": "log",
+      "text": "\u00f0\u0178\u017d\u00a4 Enabling microphone..."
+    },
+    {
+      "timestamp": "2025-12-27T18:03:33.918663",
+      "type": "info",
+      "text": "publishing track {room: test-room, roomID: RM_uSq9jT7SGJ38, participant: user1, pID: PA_aWuNYA9zgpfo, trackID: undefined}"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:33.971007",
+      "type": "log",
+      "text": "\u00e2\u0153\u2026 Microphone enabled successfully"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:33.971624",
+      "type": "log",
+      "text": "\u00f0\u0178\u2018\u00a5 Existing participants: 0"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:33.972310",
+      "type": "log",
+      "text": "\u00e2\u008f\u00b0 Starting 15s timeout for agent to join..."
+    },
+    {
+      "timestamp": "2025-12-27T18:03:33.972544",
+      "type": "log",
+      "text": "\u00e2\u0153\u2026 Setup complete - ready to talk"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:34.117993",
+      "type": "warning",
+      "text": "silence detected on local audio track {room: test-room, roomID: RM_uSq9jT7SGJ38, participant: user1, pID: PA_aWuNYA9zgpfo, trackID: TR_AMpoFXuh2Sr9ef}"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:34.176821",
+      "type": "warning",
+      "text": "silence detected on local audio track {room: test-room, roomID: RM_uSq9jT7SGJ38, participant: user1, pID: PA_aWuNYA9zgpfo, trackID: TR_AMpoFXuh2Sr9ef}"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:37.731816",
+      "type": "log",
+      "text": "\u00f0\u0178\u2018\u00a4 Participant connected: agent-AJ_CwkFoWyXvDuT"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:37.786922",
+      "type": "log",
+      "text": "\u00f0\u0178\u017d\u00b5 Track subscribed: audio from agent-AJ_CwkFoWyXvDuT"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:37.790713",
+      "type": "log",
+      "text": "\u00f0\u0178\u201d\u0160 Audio element attached"
+    }
+  ],
+  "browser_errors": [],
+  "network_requests": [
+    {
+      "timestamp": "2025-12-27T18:03:30.784892",
+      "url": "http://localhost:9000/",
+      "method": "GET",
+      "resource_type": "document",
+      "status": 200,
+      "status_text": "OK"
+    },
+    {
+      "timestamp": "2025-12-27T18:03:30.818337",
+      "url": "https://esm.sh/livekit-client@2.9.7",
+      "method": "GET",
+      "resource_type": "script",
+      "status": 200,
+      "status_text": ""
+    },
+    {
+      "timestamp": "2025-12-27T18:03:30.943362",
+      "url": "https://esm.sh/node/process.mjs",
+      "method": "GET",
+      "resource_type": "script",
+      "status": 200,
+      "status_text": ""
+    },
+    {
+      "timestamp": "2025-12-27T18:03:30.943737",
+      "url": "https://esm.sh/livekit-client@2.9.7/es2022/livekit-client.mjs",
+      "method": "GET",
+      "resource_type": "script",
+      "status": 200,
+      "status_text": ""
+    },
+    {
+      "timestamp": "2025-12-27T18:03:31.009935",
+      "url": "https://esm.sh/node/events.mjs",
+      "method": "GET",
+      "resource_type": "script",
+      "status": 200,
+      "status_text": ""
+    },
+    {
+      "timestamp": "2025-12-27T18:03:31.010181",
+      "url": "https://esm.sh/node/tty.mjs",
+      "method": "GET",
+      "resource_type": "script",
+      "status": 200,
+      "status_text": ""
+    },
+    {
+      "timestamp": "2025-12-27T18:03:31.247014",
+      "url": "https://esm.sh/node/async_hooks.mjs",
+      "method": "GET",
+      "resource_type": "script",
+      "status": 200,
+      "status_text": ""
+    },
+    {
+      "timestamp": "2025-12-27T18:03:31.360588",
+      "url": "http://localhost:9000/api/v1/agents/",
+      "method": "GET",
+      "resource_type": "fetch",
+      "status": 200,
+      "status_text": "OK"
+    }
+  ],
+  "microphone_events": [
+    {
+      "timestamp": "2025-12-27T18:03:39.554031",
+      "event": "user_start_request",
+      "details": {
+        "message": "User requested to start talking"
+      }
+    },
+    {
+      "timestamp": "2025-12-27T18:03:41.556338",
+      "event": "user_stop_request",
+      "details": {
+        "message": "User requested to stop talking"
+      }
+    }
+  ],
+  "connection_events": [],
+  "voice_events": []
+}

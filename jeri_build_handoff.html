@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jeri Build Handoff</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; max-width: 1000px; line-height: 1.45; }
+    h1, h2 { margin-top: 1.2em; }
+    code, pre { background: #f6f8fa; border-radius: 6px; }
+    code { padding: 2px 6px; }
+    pre { padding: 12px; overflow-x: auto; }
+    .ok { color: #0a7a2f; font-weight: 700; }
+    .warn { color: #a15c00; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Jeri Build Handoff</h1>
+  <p><strong>Last Updated:</strong> 2026-05-24 11:27 AM EDT</p>
+
+  <h2>Current Runtime Status</h2>
+  <ul>
+    <li><span class="ok">Running:</span> websocket server, orchestrator, jeri process are up.</li>
+    <li><span class="warn">Issue:</span> message path is unstable (stale shared transport / event-loop reconnect errors).</li>
+    <li><span class="warn">Issue:</span> fallback path needs optional packages in some environments (<code>websockets</code>, <code>chromadb</code>, <code>letta</code>).</li>
+  </ul>
+
+  <h2>Observed Errors</h2>
+  <pre><code>Shared transport is stale (receiver_alive=False, ws_open=False), reconnecting...
+Error disconnecting during reconnect: ... attached to a different loop
+No response detected on topic 'january-statements' within 6s</code></pre>
+
+  <h2>What Was Already Done</h2>
+  <ul>
+    <li>Added <code>jeri-agent</code> mapping in <code>agent_messaging/send_agent_message.py</code>:
+      topic <code>january-statements</code>, response hint <code>jeri</code>.</li>
+    <li>Verified Jeri, orchestrator, and websocket server processes are launched.</li>
+    <li>Published status and docs pages to <code>public_html</code>.</li>
+  </ul>
+
+  <h2>Recommended Technician Steps</h2>
+  <ol>
+    <li>Use the same Python venv for all A2A tools and services.</li>
+    <li>Install required messaging deps in that venv:</li>
+  </ol>
+  <pre><code>pip install websockets chromadb letta</code></pre>
+  <ol start="3">
+    <li>Restart stack in order: websocket server -&gt; orchestrator -&gt; jeri.</li>
+    <li>Run a direct message test to Jeri and verify response appears on topic <code>january-statements</code>.</li>
+    <li>If reconnect errors persist, isolate transport to one loop/process (avoid cross-loop shared transport reuse).</li>
+  </ol>
+
+  <h2>Key Paths</h2>
+  <ul>
+    <li><code>/home/adamsl/planner/a2a_communicating_agents/agent_messaging/send_agent_message.py</code></li>
+    <li><code>/home/adamsl/planner/a2a_communicating_agents/logs/jeri_agent.log</code></li>
+    <li><code>/home/adamsl/planner/a2a_communicating_agents/logs/orchestrator.log</code> (or planner logs root)</li>
+  </ul>
+
+  <h2>Live Links</h2>
+  <ul>
+    <li>Status page: <a href="https://americansjewelry.com/status.html">https://americansjewelry.com/status.html</a></li>
+    <li>Upload guide: <a href="https://americansjewelry.com/americanjewelry_live_upload_guide.html">https://americansjewelry.com/americanjewelry_live_upload_guide.html</a></li>
+  </ul>
+</body>
+</html>

@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Letta Voice Agent - Multi-Agent Selector (DEBUG VERSION)</title>
+    <script type="module">
+        import { Room, RoomEvent, ConnectionState, Track } from 'https://esm.sh/livekit-client@2.9.7';
+
+        // Configuration
+        const PROXY_URL = 'http://localhost:9000';
+        const LIVEKIT_URL = 'ws://localhost:7880';
+
+        // Token for dev mode (valid for 24 hours from 2026-02-16 13:38:52 UTC)
+        // NOTE: This token will expire. Regenerate with: ./update_voice_token.sh
+        const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiVXNlciIsInZpZGVvIjp7InJvb21Kb2luIjp0cnVlLCJyb29tIjoidGVzdC1yb29tIiwiY2FuUHVibGlzaCI6dHJ1ZSwiY2FuU3Vic2NyaWJlIjp0cnVlLCJjYW5QdWJsaXNoRGF0YSI6dHJ1ZX0sInN1YiI6InVzZXIxIiwiaXNzIjoiZGV2a2V5IiwibmJmIjoxNzcxMjQ5MTMyLCJleHAiOjE3NzEzMzU1MzJ9.aE1KBAMNkad9WuFKOxDxVqWNz8QQE508Rgjg2AYsJPU';
+        const PRIMARY_AGENT_NAME = 'Agent_66';
+        const PRIMARY_AGENT_WARNING = `Only ${PRIMARY_AGENT_NAME} is supported for LiveKit voice sessions.`;
+
+        let room;
+        let primaryAgentRecord = null;
+        let primaryAgentCardElement = null;
+        let selectedAgent = null;
+        let sessionId = Math.random().toString(36).substring(7);  // Unique session ID
+        let connectionRetries = 0;
+        const MAX_RETRIES = 3;
+        const AGENT_JOIN_TIMEOUT = 15000;  // 15 seconds to wait for agent
+        let agentJoinTimer = null;
+
+        // DEBUG: Audio monitoring
+        let audioLevelInterval = null;
+        let audioTrackPublished = false;
+
+        const status = document.getElementById('status');
+        const agentSelector = document.getElementById('agentSelector');
+        const agentInfo = document.getElementById('agentInfo');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const searchInput = document.getElementById('searchInput');
+        const agentList = document.getElementById('agentList');
+        const debugLog = document.getElementById('debugLog');
+        const micStatus = document.getElementById('micStatus');
+        const audioLevel = document.getElementById('audioLevel');
+
+        // Debug status LED elements
+        const ledWebSocket = document.getElementById('ledWebSocket');
+        const ledLiveKit = document.getElementById('ledLiveKit');
+        const ledAgentSelection = document.getElementById('ledAgentSelection');
+        const ledAudioInput = document.getElementById('ledAudioInput');
+        const ledAudioOutput = document.getElementById('ledAudioOutput');
+        const ledMessageSend = document.getElementById('ledMessageSend');
+        const ledMessageReceive = document.getElementById('ledMessageReceive');
+        const ledAgentResponse = document.getElementById('ledAgentResponse');
+
+        // State textbox elements
+        const stateAgentId = document.getElementById('stateAgentId');
+        const stateAgentName = document.getElementById('stateAgentName');
+        const stateRoomName = document.getElementById('stateRoomName');
+        const stateWebSocketUrl = document.getElementById('stateWebSocketUrl');
+        const stateLiveKitState = document.getElementById('stateLiveKitState');
+        const stateLastMessageSent = document.getElementById('stateLastMessageSent');
+        const stateLastMessageReceived = document.getElementById('stateLastMessageReceived');
+        const stateAudioState = document.getElementById('stateAudioState');
+        const stateParticipantCount = document.getElementById('stateParticipantCount');
+        const stateErrorMessage = document.getElementById('stateErrorMessage');
+
+        // LED state updater functions
+        function updateLED(ledElement, state) {
+            // State: 'disconnected' (gray), 'connecting' (yellow), 'connected' (green), 'error' (red)
+            ledElement.className = 'status-led status-led-' + state;
+            ledElement.setAttribute('data-state', state);
+        }
+
+        function updateState(stateElement, value) {
+            stateElement.textContent = value || '-';
+        }
+
+        function logEvent(message, category = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `event-log-entry event-${category}`;
+            entry.setAttribute('data-category', category);
+            entry.setAttribute('data-timestamp', new Date().toISOString());
+            entry.textContent = `[${time}] ${message}`;
+            debugLog.appendChild(entry);
+            debugLog.scrollTop = debugLog.scrollHeight;
+        }
+
+        // DEBUG: Logging with visual feedback
+        function debugInfo(message, emoji = '📝') {
+            console.log(message);
+            logEvent(`${emoji} ${message}`, 'info');
+        }
+
+        function debugError(message, emoji = '❌') {
+            console.error(message);
+            logEvent(`${emoji} ${message}`, 'error');
+            updateState(stateErrorMessage, message);
+        }
+
+        function debugSuccess(message, emoji = '✅') {
+            console.log(message);
+            logEvent(`${emoji} ${message}`, 'success');
+        }
+
+        // Generate a room name that includes the session ID
+        // This ensures each agent switch gets a clean room
+        function getRoomName() {
+            return `agent-${selectedAgent.id.substring(0, 8)}-${sessionId}`;
+        }
+
+        // Check microphone availability before connecting
+        async function checkMicrophoneAvailability() {
+            try {
+                debugInfo('Checking microphone availability...', '🎤');
+                logEvent('CHECKING MICROPHONE AVAILABILITY', 'audio');
+
+                // Check if mediaDevices API is available
+                if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+                    throw new Error('Media devices API not available in this browser');
+                }
+
+                // Enumerate devices
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const audioInputs = devices.filter(device => device.kind === 'audioinput');
+
+                if (audioInputs.length === 0) {
+                    throw new Error('No microphone devices found. Please connect a microphone and try again.');
+                }
+
+                debugSuccess(`Found ${audioInputs.length} microphone device(s):`);
+                audioInputs.forEach((device, idx) => {
+                    debugInfo(`  ${idx + 1}. ${device.label || 'Unnamed microphone'} (${device.deviceId.substring(0, 20)}...)`);
+                });
+
+                // Try to get user media to ensure permissions
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    // Stop the stream immediately - we just needed to check permissions
+                    stream.getTracks().forEach(track => track.stop());
+                    debugSuccess('Microphone permissions granted');
+                    logEvent('MICROPHONE PERMISSIONS GRANTED', 'audio');
+                } catch (permErr) {
+                    throw new Error(`Microphone permission denied: ${permErr.message}`);
+                }
+
+                return true;
+            } catch (err) {
+                debugError(`Microphone check failed: ${err.message}`);
+                updateLED(ledAudioInput, 'error');
+                logEvent(`MICROPHONE CHECK FAILED: ${err.message}`, 'error');
+                throw err;
+            }
+        }
+
+        // Monitor audio levels
+        function startAudioLevelMonitoring() {
+            if (audioLevelInterval) {
+                clearInterval(audioLevelInterval);
+            }
+
+            audioLevelInterval = setInterval(() => {
+                if (!room || !room.localParticipant) {
+                    return;
+                }
+
+                const audioTrack = room.localParticipant.getTrackPublication(Track.Source.Microphone);
+                if (audioTrack && audioTrack.track) {
+                    // Track exists and is publishing
+                    if (!audioTrackPublished) {
+                        audioTrackPublished = true;
+                        debugSuccess('Audio track is PUBLISHING to LiveKit', '🎙️');
+                    }
+                    micStatus.textContent = 'ACTIVE';
+                    micStatus.className = 'indicator success pulse';
+                } else {
+                    if (audioTrackPublished) {
+                        audioTrackPublished = false;
+                        debugError('Audio track STOPPED publishing', '🔇');
+                    }
+                    micStatus.textContent = 'Not publishing';
+                    micStatus.className = 'indicator warning';
+                }
+            }, 500);
+        }
+
+        function stopAudioLevelMonitoring() {
+            if (audioLevelInterval) {
+                clearInterval(audioLevelInterval);
+                audioLevelInterval = null;
+            }
+            audioTrackPublished = false;
+            micStatus.textContent = 'Disconnected';
+            micStatus.className = 'indicator';
+        }
+
+        // Load agents on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            debugInfo('Page loaded, initializing...', '🚀');
+            logEvent('APPLICATION INITIALIZED', 'info');
+
+            // Initialize all LEDs to disconnected state
+            updateLED(ledWebSocket, 'disconnected');
+            updateLED(ledLiveKit, 'disconnected');
+            updateLED(ledAgentSelection, 'disconnected');
+            updateLED(ledAudioInput, 'disconnected');
+            updateLED(ledAudioOutput, 'disconnected');
+            updateLED(ledMessageSend, 'disconnected');
+            updateLED(ledMessageReceive, 'disconnected');
+            updateLED(ledAgentResponse, 'disconnected');
+
+            loadAgents();
+        });
+
+        async function loadAgents() {
+            try {
+                status.textContent = 'Loading agents...';
+                status.className = '';
+                debugInfo('Fetching agents from Letta server...', '🔄');
+
+                const response = await fetch(`${PROXY_URL}/api/v1/agents/`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch agents: ${response.statusText}`);
+                }
+
+                const agents = await response.json();
+                debugSuccess(`Loaded ${agents.length} agents from Letta server`);
+
+                // Store agents globally for filtering
+                window.allAgents = agents;
+
+                displayAgents(agents);
+                status.textContent = `Loaded ${agents.length} agents. Select one to begin.`;
+                status.className = 'info';
+
+            } catch (err) {
+                status.textContent = 'Error loading agents: ' + err.message;
+                status.className = 'error';
+                debugError(`Error loading agents: ${err.message}`);
+                agentList.innerHTML = '<div class="error">Failed to load agents. Make sure Letta server is running on port 8283.</div>';
+            }
+        }
+
+        function displayAgents(agents) {
+            agentList.innerHTML = '';
+
+            if (agents.length === 0) {
+                agentList.innerHTML = '<div class="info">No agents found.</div>';
+                return;
+            }
+
+            let localPrimaryAgent = null;
+            let localPrimaryCard = null;
+
+            agents.forEach(agent => {
+                const agentCard = document.createElement('div');
+                agentCard.className = 'agent-card';
+                agentCard.dataset.agentId = agent.id;
+                agentCard.dataset.agentName = agent.name || 'Unnamed Agent';
+
+                const name = agent.name || 'Unnamed Agent';
+                const id = agent.id;
+                const created = agent.created_at ? new Date(agent.created_at).toLocaleDateString() : 'Unknown';
+                const isPrimaryAgent = name === PRIMARY_AGENT_NAME;
+
+                // Get model info if available
+                let modelInfo = '';
+                if (agent.llm_config && agent.llm_config.model) {
+                    modelInfo = `<div class="agent-model">Model: ${agent.llm_config.model}</div>`;
+                }
+
+                agentCard.innerHTML = `
+                    <div class="agent-name">${name}</div>
+                    <div class="agent-id">${id}</div>
+                    <div class="agent-created">Created: ${created}</div>
+                    ${modelInfo}
+                `;
+
+                if (isPrimaryAgent) {
+                    agentCard.innerHTML += `<div class="agent-lock-pill">Locked voice agent</div>`;
+                    agentCard.classList.add('primary-agent');
+                    agentCard.onclick = () => selectAgent(agent, agentCard);
+                    localPrimaryAgent = agent;
+                    localPrimaryCard = agentCard;
+                } else {
+                    agentCard.classList.add('disabled');
+                    agentCard.title = PRIMARY_AGENT_WARNING;
+                    agentCard.onclick = () => {
+                        debugError(`Blocked selection of ${name}. ${PRIMARY_AGENT_WARNING}`, '🚫');
+                        status.textContent = PRIMARY_AGENT_WARNING;
+                        status.className = 'warning';
+                        if (primaryAgentRecord && primaryAgentCardElement) {
+                            selectAgent(primaryAgentRecord, primaryAgentCardElement);
+                        } else if (localPrimaryAgent && localPrimaryCard) {
+                            selectAgent(localPrimaryAgent, localPrimaryCard);
+                        }
+                    };
+                }
+
+                agentList.appendChild(agentCard);
+            });
+
+            if (localPrimaryAgent) {
+                primaryAgentRecord = localPrimaryAgent;
+                primaryAgentCardElement = localPrimaryCard;
+                debugInfo(`Detected ${PRIMARY_AGENT_NAME}: ${localPrimaryAgent.id}`, '🎯');
+            }
+
+            if (!primaryAgentRecord) {
+                const message = `${PRIMARY_AGENT_NAME} not found. Please recreate it before connecting.`;
+                status.textContent = message;
+                status.className = 'error';
+                connectBtn.disabled = true;
+                debugError(message, '❌');
+                return;
+            }
+
+            const alreadySelected = selectedAgent && selectedAgent.id === primaryAgentRecord.id;
+            if (!alreadySelected) {
+                debugInfo(`Auto-selecting ${PRIMARY_AGENT_NAME} to keep voice agent locked`, '🔒');
+                selectAgent(primaryAgentRecord, primaryAgentCardElement);
+                status.textContent = `${PRIMARY_AGENT_NAME} locked in. Click Connect to start voice chat.`;
+                status.className = 'info';
+            }
+        }
+
+        function selectAgent(agent, cardElement = null) {
+            selectedAgent = agent;
+            debugInfo(`Agent selected: ${agent.name} (${agent.id})`, '👤');
+            logEvent(`AGENT SELECTED: ${agent.name} (${agent.id})`, 'agent-selection');
+
+            // Update debug status
+            updateLED(ledAgentSelection, 'connected');
+            updateState(stateAgentId, agent.id);
+            updateState(stateAgentName, agent.name);
+
+            // Highlight selected card
+            document.querySelectorAll('.agent-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            const highlightCard = cardElement || document.querySelector(`.agent-card[data-agent-id="${agent.id}"]`);
+            if (highlightCard) {
+                highlightCard.classList.add('selected');
+            }
+
+            // Show agent info
+            agentInfo.style.display = 'block';
+            agentInfo.innerHTML = `
+                <h3>Selected Agent</h3>
+                <div><strong>Name:</strong> ${agent.name || 'Unnamed'}</div>
+                <div><strong>ID:</strong> ${agent.id}</div>
+                <div><strong>Created:</strong> ${agent.created_at ? new Date(agent.created_at).toLocaleString() : 'Unknown'}</div>
+                ${agent.llm_config ? `
+                    <div><strong>Model:</strong> ${agent.llm_config.model || 'Unknown'}</div>
+                    ${agent.llm_config.model_endpoint_type ? `<div><strong>Provider:</strong> ${agent.llm_config.model_endpoint_type}</div>` : ''}
+                ` : ''}
+                ${agent.embedding_config ? `<div><strong>Embeddings:</strong> ${agent.embedding_config.embedding_model || 'Unknown'}</div>` : ''}
+            `;
+
+            // If already connected, disconnect and reconnect with new agent in new room
+            if (room && room.state === 'connected') {
+                status.textContent = 'Switching agent...';
+                status.className = 'info';
+                debugInfo(`Switching from old agent to ${agent.name}...`, '🔄');
+                window.disconnect().then(() => {
+                    debugInfo('Disconnected from old agent room, now connecting to new one...', '✅');
+                    setTimeout(() => window.connect(), 1000);  // Give backend time to clean up
+                });
+            } else {
+                connectBtn.disabled = false;
+                status.textContent = `Agent "${agent.name}" selected. Click Connect to start voice chat.`;
+                status.className = 'info';
+            }
+        }
+
+        window.connect = async function() {
+            if (!selectedAgent) {
+                status.textContent = 'Please select an agent first!';
+                status.className = 'error';
+                debugError('No agent selected!');
+                return;
+            }
+
+            try {
+                status.textContent = 'Checking microphone...';
+                status.className = '';
+                connectBtn.disabled = true;
+
+                // Update initial LED states
+                updateLED(ledLiveKit, 'connecting');
+                updateLED(ledAudioInput, 'connecting');
+                logEvent('CONNECTION INITIATED', 'connection');
+
+                // Check microphone availability BEFORE connecting
+                await checkMicrophoneAvailability();
+
+                status.textContent = 'Connecting...';
+                debugInfo('Creating LiveKit room...', '🔗');
+                updateState(stateWebSocketUrl, LIVEKIT_URL);
+
+                // Create room with options
+                room = new Room({
+                    adaptiveStream: true,
+                    dynacast: true,
+                    disconnectOnPageLeave: true,
+                });
+
+                // Add event listeners
+                room.on(RoomEvent.SignalConnected, () => {
+                    debugSuccess('Signal connection established');
+                    updateLED(ledWebSocket, 'connected');
+                    logEvent('WEBSOCKET CONNECTED', 'connection');
+                });
+
+                room.on(RoomEvent.Connected, () => {
+                    debugSuccess('Room connected successfully');
+                    status.textContent = 'Connected! Waiting for agent...';
+                    status.className = 'connected';
+                    updateLED(ledLiveKit, 'connected');
+                    updateState(stateLiveKitState, 'connected');
+                    updateState(stateRoomName, room.name);
+                    logEvent('LIVEKIT ROOM CONNECTED', 'connection');
+                });
+
+                room.on(RoomEvent.Reconnecting, () => {
+                    debugInfo('Reconnecting...', '🔄');
+                    status.textContent = 'Reconnecting...';
+                    updateLED(ledLiveKit, 'connecting');
+                    updateState(stateLiveKitState, 'reconnecting');
+                    logEvent('RECONNECTING TO ROOM', 'connection');
+                });
+
+                room.on(RoomEvent.Disconnected, (reason) => {
+                    debugError(`Disconnected: ${reason}`);
+                    connectBtn.disabled = false;
+                    disconnectBtn.disabled = true;
+                    stopAudioLevelMonitoring();
+                    updateLED(ledWebSocket, 'disconnected');
+                    updateLED(ledLiveKit, 'disconnected');
+                    updateLED(ledAudioInput, 'disconnected');
+                    updateLED(ledAudioOutput, 'disconnected');
+                    updateState(stateLiveKitState, 'disconnected');
+                    logEvent(`DISCONNECTED: ${reason}`, 'disconnection');
+                });
+
+                room.on(RoomEvent.ConnectionStateChanged, (state) => {
+                    debugInfo(`Connection state: ${state}`, '🔌');
+                    updateState(stateLiveKitState, state);
+                    logEvent(`CONNECTION STATE: ${state}`, 'connection');
+                });
+
+                // Track when local tracks are published
+                room.on(RoomEvent.LocalTrackPublished, (publication) => {
+                    debugSuccess(`Local track published: ${publication.kind} (${publication.source})`, '📤');
+                    if (publication.kind === 'audio') {
+                        debugSuccess('AUDIO TRACK IS NOW PUBLISHING TO LIVEKIT!', '🎙️');
+                        updateLED(ledAudioInput, 'connected');
+                        updateState(stateAudioState, 'publishing');
+                        logEvent('AUDIO TRACK PUBLISHING', 'audio');
+                    }
+                });
+
+                room.on(RoomEvent.LocalTrackUnpublished, (publication) => {
+                    debugError(`Local track unpublished: ${publication.kind}`, '📥');
+                    if (publication.kind === 'audio') {
+                        updateLED(ledAudioInput, 'error');
+                        updateState(stateAudioState, 'unpublished');
+                        logEvent('AUDIO TRACK UNPUBLISHED', 'audio');
+                    }
+                });
+
+                room.on('participantConnected', (participant) => {
+                    debugSuccess(`Participant connected: ${participant.identity}`, '👤');
+                    logEvent(`PARTICIPANT JOINED: ${participant.identity}`, 'participant');
+
+                    // Update participant count
+                    const count = room.remoteParticipants.size;
+                    updateState(stateParticipantCount, count);
+
+                    // Check if this is the agent
+                    if (participant.identity.includes('agent') || participant.identity.includes('Agent')) {
+                        updateLED(ledAgentResponse, 'connected');
+                        logEvent('AGENT PARTICIPANT CONNECTED', 'agent');
+                    }
+
+                    // Clear the agent join timeout timer
+                    if (agentJoinTimer) {
+                        clearTimeout(agentJoinTimer);
+                        agentJoinTimer = null;
+                    }
+
+                    // Reset retry counter on successful connection
+                    connectionRetries = 0;
+
+                    status.textContent = `Agent "${selectedAgent.name}" connected! Start speaking...`;
+                    status.className = 'connected';
+                });
+
+                room.on('trackSubscribed', (track, publication, participant) => {
+                    debugSuccess(`Track subscribed: ${track.kind} from ${participant.identity}`, '🎵');
+                    logEvent(`TRACK SUBSCRIBED: ${track.kind} from ${participant.identity}`, 'audio');
+
+                    if (track.kind === 'audio') {
+                        const audioElement = track.attach();
+                        document.body.appendChild(audioElement);
+                        debugSuccess('Audio element attached - you should hear responses now!', '🔊');
+                        updateLED(ledAudioOutput, 'connected');
+                        logEvent('AUDIO OUTPUT ENABLED', 'audio');
+                    }
+                });
+
+                room.on('trackUnsubscribed', (track) => {
+                    debugInfo(`Track unsubscribed: ${track.kind}`, '📥');
+                    track.detach();
+                    if (track.kind === 'audio') {
+                        updateLED(ledAudioOutput, 'disconnected');
+                        logEvent('AUDIO TRACK UNSUBSCRIBED', 'audio');
+                    }
+                });
+
+                // Listen for data messages from agent
+                room.on('dataReceived', (payload, participant) => {
+                    try {
+                        const data = JSON.parse(new TextDecoder().decode(payload));
+                        const timestamp = new Date().toLocaleTimeString();
+
+                        updateLED(ledMessageReceive, 'connected');
+                        updateState(stateLastMessageReceived, `${timestamp} - ${data.type}`);
+                        logEvent(`MESSAGE RECEIVED: ${data.type} from ${participant?.identity || 'unknown'}`, 'message');
+
+                        if (data.type === 'transcript') {
+                            debugInfo(`${data.role}: ${data.text}`, data.role === 'user' ? '🗣️' : '🤖');
+                            if (data.role === 'agent') {
+                                updateLED(ledAgentResponse, 'connected');
+                                logEvent(`AGENT RESPONSE: ${data.text.substring(0, 50)}...`, 'agent');
+                            }
+                        } else if (data.type === 'status_update') {
+                            debugInfo(`Status: ${data.stage} - ${data.detail}`, '📊');
+                            logEvent(`STATUS UPDATE: ${data.stage} - ${data.detail}`, 'status');
+                        }
+
+                        // Reset message receive LED after brief flash
+                        setTimeout(() => updateLED(ledMessageReceive, 'disconnected'), 500);
+                    } catch (e) {
+                        // Not JSON, ignore
+                    }
+                });
+
+                // Send agent selection to voice system via data channel after connecting
+                room.on(RoomEvent.Connected, () => {
+                    const encoder = new TextEncoder();
+                    const data = encoder.encode(JSON.stringify({
+                        type: 'agent_selection',
+                        agent_id: selectedAgent.id,
+                        agent_name: selectedAgent.name
+                    }));
+                    room.localParticipant.publishData(data, { reliable: true });
+                    debugInfo(`Sent agent selection: ${selectedAgent.id}`, '📤');
+
+                    const timestamp = new Date().toLocaleTimeString();
+                    updateLED(ledMessageSend, 'connected');
+                    updateState(stateLastMessageSent, `${timestamp} - agent_selection`);
+                    logEvent('AGENT SELECTION MESSAGE SENT', 'message');
+
+                    // Reset message send LED after brief flash
+                    setTimeout(() => updateLED(ledMessageSend, 'disconnected'), 500);
+                });
+
+                // CRITICAL FIX: Use "test-room" to match the JWT token
+                // The token is hardcoded to allow "test-room" only
+                // Dynamic room names were causing browser and agent to join different rooms!
+                const roomName = 'test-room';
+                debugInfo(`Connecting to room: ${roomName} on ${LIVEKIT_URL}`, '🔗');
+                debugInfo('⚠️  Using fixed room name "test-room" to match JWT token', '🔑');
+
+                // Connect with timeout
+                const connectPromise = room.connect(LIVEKIT_URL, TOKEN, {
+                    autoSubscribe: true,
+                });
+
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Connection timeout after 15s')), 15000)
+                );
+
+                await Promise.race([connectPromise, timeoutPromise]);
+
+                debugSuccess(`Connected to room: ${room.name}`, '🎉');
+
+                // Request agent dispatch
+                debugInfo('Requesting agent dispatch to room...', '📡');
+                try {
+                    const dispatchResponse = await fetch(`${PROXY_URL}/api/dispatch-agent`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ room: roomName })
+                    });
+
+                    const dispatchData = await dispatchResponse.json();
+                    if (dispatchData.success) {
+                        debugSuccess(`Agent dispatch requested: ${dispatchData.message}`, '✅');
+                    } else {
+                        debugError(`Dispatch warning: ${dispatchData.error || dispatchData.message}`, '⚠️');
+                    }
+                } catch (dispatchErr) {
+                    debugError(`Failed to request agent dispatch: ${dispatchErr.message}`, '❌');
+                    // Continue anyway - agent might auto-join
+                }
+
+                debugInfo('Enabling microphone...', '🎤');
+
+                // Enable microphone with explicit error handling
+                try {
+                    await room.localParticipant.setMicrophoneEnabled(true);
+                    debugSuccess('Microphone enabled successfully!', '✅');
+
+                    // Start monitoring audio levels
+                    startAudioLevelMonitoring();
+                } catch (micErr) {
+                    debugError(`Failed to enable microphone: ${micErr.message}`);
+                    throw new Error(`Microphone error: ${micErr.message}`);
+                }
+
+                // Check for existing participants
+                const existingParticipants = Array.from(room.remoteParticipants.values());
+                debugInfo(`Existing participants in room: ${existingParticipants.length}`, '👥');
+
+                if (existingParticipants.length > 0) {
+                    // Agent already in room - manually trigger participant connected logic
+                    existingParticipants.forEach(participant => {
+                        debugSuccess(`Existing participant detected: ${participant.identity}`, '👤');
+                    });
+
+                    // Clear the agent join timeout timer (same as participantConnected event)
+                    if (agentJoinTimer) {
+                        clearTimeout(agentJoinTimer);
+                        agentJoinTimer = null;
+                    }
+
+                    // Reset retry counter on successful connection
+                    connectionRetries = 0;
+
+                    status.textContent = `Agent "${selectedAgent.name}" connected! Start speaking...`;
+                    status.className = 'connected';
+                    debugSuccess('Agent is already in the room!', '🎉');
+                } else {
+                    // Waiting for agent to join
+                    status.textContent = 'Connected! Waiting for agent to join...';
+                    status.className = 'connected';
+                    debugInfo(`Waiting ${AGENT_JOIN_TIMEOUT/1000}s for agent to join...`, '⏰');
+
+                    // Set timeout for agent join
+                    agentJoinTimer = setTimeout(async () => {
+                        debugError('Agent join timeout! No agent joined the room.', '⏱️');
+
+                        if (connectionRetries < MAX_RETRIES) {
+                            connectionRetries++;
+                            const backoffDelay = 1000 * connectionRetries;
+
+                            status.textContent = `Agent didn't join. Retrying (${connectionRetries}/${MAX_RETRIES}) in ${backoffDelay/1000}s...`;
+                            status.className = 'error';
+
+                            debugInfo(`Retry ${connectionRetries}/${MAX_RETRIES} after ${backoffDelay}ms delay...`, '🔄');
+
+                            // Disconnect and reconnect with fresh room
+                            await window.disconnect();
+
+                            // Generate new session ID for completely fresh room
+                            sessionId = Math.random().toString(36).substring(7);
+                            debugInfo(`Generated new session ID: ${sessionId}`, '🆕');
+
+                            setTimeout(() => {
+                                debugInfo('Reconnecting with fresh room...', '🔄');
+                                window.connect();
+                            }, backoffDelay);
+
+                        } else {
+                            // Max retries exceeded
+                            status.textContent = `Failed to connect after ${MAX_RETRIES} attempts. Please check voice agent logs and try again.`;
+                            status.className = 'error';
+                            debugError('Max retries exceeded. Voice agent may not be running.');
+
+                            // Disconnect
+                            await window.disconnect();
+
+                            // Provide troubleshooting guidance
+                            alert(
+                                'Voice agent failed to join after multiple attempts.\n\n' +
+                                'Troubleshooting steps:\n' +
+                                '1. Check that voice agent is running: ps aux | grep letta_voice_agent\n' +
+                                '2. Check voice agent logs: tail -f /tmp/letta_voice_agent.log\n' +
+                                '3. Restart the voice system: ./restart_voice_system.sh\n' +
+                                '4. Check LiveKit server logs: tail -f /tmp/livekit.log'
+                            );
+                        }
+                    }, AGENT_JOIN_TIMEOUT);
+                }
+
+                disconnectBtn.disabled = false;
+                debugSuccess('Setup complete - ready to talk!', '✅');
+
+            } catch (err) {
+                status.textContent = 'Error: ' + err.message;
+                status.className = 'error';
+                connectBtn.disabled = false;
+                debugError(`Connection error: ${err.message}`);
+                stopAudioLevelMonitoring();
+            }
+        };
+
+        window.disconnect = async function() {
+            // Clear any pending agent join timeout
+            if (agentJoinTimer) {
+                clearTimeout(agentJoinTimer);
+                agentJoinTimer = null;
+                debugInfo('Cleared agent join timeout', '⏰');
+            }
+
+            stopAudioLevelMonitoring();
+
+            if (room) {
+                try {
+                    // Publish room cleanup message to notify backend
+                    const encoder = new TextEncoder();
+                    const cleanupData = encoder.encode(JSON.stringify({
+                        type: 'room_cleanup',
+                        timestamp: new Date().toISOString()
+                    }));
+                    await room.localParticipant.publishData(cleanupData, { reliable: true });
+                    debugInfo('Sent room cleanup notification', '📤');
+                } catch (e) {
+                    debugError(`Error sending cleanup notification: ${e.message}`);
+                }
+
+                // Give backend a moment to process cleanup
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                await room.disconnect();
+                room = null;
+                status.textContent = 'Disconnected';
+                status.className = '';
+                connectBtn.disabled = selectedAgent ? false : true;
+                disconnectBtn.disabled = true;
+                debugInfo('Disconnected from room', '👋');
+
+                // Reset all LED states
+                updateLED(ledWebSocket, 'disconnected');
+                updateLED(ledLiveKit, 'disconnected');
+                updateLED(ledAudioInput, 'disconnected');
+                updateLED(ledAudioOutput, 'disconnected');
+                updateLED(ledMessageSend, 'disconnected');
+                updateLED(ledMessageReceive, 'disconnected');
+                updateLED(ledAgentResponse, 'disconnected');
+
+                // Reset state displays
+                updateState(stateRoomName, '-');
+                updateState(stateLiveKitState, 'disconnected');
+                updateState(stateAudioState, '-');
+                updateState(stateParticipantCount, '0');
+                updateState(stateErrorMessage, '-');
+
+                logEvent('FULLY DISCONNECTED - ALL SYSTEMS RESET', 'disconnection');
+            }
+        };
+
+        window.refreshAgents = function() {
+            debugInfo('Refreshing agents list...', '🔄');
+            loadAgents();
+        };
+
+        window.filterAgents = function() {
+            const searchTerm = searchInput.value.toLowerCase();
+            if (!window.allAgents) return;
+
+            let filtered = window.allAgents.filter(agent => {
+                const name = (agent.name || '').toLowerCase();
+                const id = (agent.id || '').toLowerCase();
+                return name.includes(searchTerm) || id.includes(searchTerm);
+            });
+
+            const primaryAgent = window.allAgents.find(agent => (agent.name || '') === PRIMARY_AGENT_NAME);
+            if (primaryAgent && !filtered.some(agent => agent.id === primaryAgent.id)) {
+                filtered = [primaryAgent, ...filtered];
+            }
+
+            displayAgents(filtered);
+        };
+
+        window.clearDebugLog = function() {
+            debugLog.innerHTML = '';
+            debugInfo('Debug log cleared', '🧹');
+        };
+
+        // Diagnostic script execution
+        async function runDiagnostic(scriptName, buttonId) {
+            const button = document.getElementById(buttonId);
+            const originalText = button.textContent;
+
+            try {
+                // Disable button and show loading state
+                button.disabled = true;
+                button.textContent = 'Running...';
+                button.style.opacity = '0.6';
+
+                debugInfo(`Starting diagnostic: ${scriptName}`, '🔧');
+                debugLog.scrollTop = debugLog.scrollHeight;
+
+                // Execute script via backend API
+                const response = await fetch(`${PROXY_URL}/api/run-diagnostic`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ script: scriptName })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Script execution failed');
+                }
+
+                // Display output in debug log
+                const timestamp = new Date().toLocaleTimeString();
+                const outputLines = result.output.split('\n');
+
+                debugInfo(`\n========== ${scriptName} OUTPUT [${timestamp}] ==========`, '📊');
+
+                outputLines.forEach(line => {
+                    if (line.trim()) {
+                        // Color code based on content
+                        if (line.includes('✅') || line.includes('SUCCESS')) {
+                            debugSuccess(line);
+                        } else if (line.includes('❌') || line.includes('ERROR') || line.includes('CRITICAL')) {
+                            debugError(line);
+                        } else if (line.includes('⚠️') || line.includes('WARNING')) {
+                            debugInfo(line, '⚠️');
+                        } else {
+                            debugInfo(line);
+                        }
+                    }
+                });
+
+                debugInfo(`========== END OUTPUT (exit code: ${result.returncode}) ==========\n`, '📊');
+
+                if (result.success) {
+                    debugSuccess(`Diagnostic completed successfully: ${scriptName}`, '✅');
+                } else {
+                    debugError(`Diagnostic completed with errors: ${scriptName}`, '⚠️');
+                }
+
+            } catch (err) {
+                debugError(`Diagnostic failed: ${err.message}`, '❌');
+                status.textContent = `Diagnostic error: ${err.message}`;
+                status.className = 'error';
+            } finally {
+                // Re-enable button
+                button.disabled = false;
+                button.textContent = originalText;
+                button.style.opacity = '1';
+            }
+        }
+
+        window.cleanLiveKitRooms = function() {
+            runDiagnostic('cleanup_livekit_room.py', 'cleanRoomsBtn');
+        };
+
+        window.testVoiceSystem = function() {
+            runDiagnostic('test_agent_66_voice.py', 'testVoiceBtn');
+        };
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .debug-badge {
+            background: #ff6b6b;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1.5fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .left-panel, .right-panel, .debug-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        #status {
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-size: 0.95em;
+        }
+
+        #status.connected {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        #status.error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+
+        #status.info {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+
+        #status.warning {
+            background: #fff3cd;
+            border-left-color: #ff9800;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #connectBtn {
+            background: #28a745;
+            color: white;
+        }
+
+        #connectBtn:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        #disconnectBtn {
+            background: #dc3545;
+            color: white;
+        }
+
+        #disconnectBtn:hover:not(:disabled) {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+        }
+
+        #refreshBtn, #clearLogBtn {
+            background: #17a2b8;
+            color: white;
+        }
+
+        #refreshBtn:hover, #clearLogBtn:hover {
+            background: #138496;
+        }
+
+        .diagnostic-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .diagnostic-btn:hover:not(:disabled) {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+        }
+
+        .diagnostic-controls {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .diagnostic-controls h4 {
+            margin-bottom: 10px;
+            color: #666;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        #searchInput {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        #searchInput:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .agent-list-container {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .agent-list-container h2 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.3em;
+        }
+
+        #agentList {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .agent-card {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .agent-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .agent-card.disabled:hover {
+            border-color: #e0e0e0;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .agent-card:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .agent-card.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .agent-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .agent-id {
+            font-size: 0.85em;
+            color: #666;
+            font-family: monospace;
+            margin-bottom: 5px;
+        }
+
+        .agent-created {
+            font-size: 0.85em;
+            color: #888;
+        }
+
+        .agent-model {
+            font-size: 0.85em;
+            color: #667eea;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .agent-lock-pill {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #667eea;
+            color: white;
+            border-radius: 999px;
+            font-size: 0.75em;
+            margin-top: 8px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        #agentInfo {
+            display: none;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        #agentInfo h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        #agentInfo > div {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        #agentInfo strong {
+            color: #333;
+        }
+
+        /* Debug panel styles */
+        .debug-panel {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 15px;
+            color: #d4d4d4;
+        }
+
+        .debug-panel h2 {
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .debug-panel h3 {
+            color: #fff;
+            margin-bottom: 10px;
+            font-size: 1em;
+            border-bottom: 1px solid #3e3e3e;
+            padding-bottom: 5px;
+        }
+
+        /* LED Grid */
+        .led-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        .led-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .led-item label {
+            font-size: 0.85em;
+            color: #bbb;
+        }
+
+        .status-led {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .status-led-disconnected {
+            background: #666;
+            box-shadow: 0 0 4px rgba(102, 102, 102, 0.5);
+        }
+
+        .status-led-connecting {
+            background: #ffc107;
+            box-shadow: 0 0 8px rgba(255, 193, 7, 0.8);
+            animation: pulse-yellow 1s infinite;
+        }
+
+        .status-led-connected {
+            background: #28a745;
+            box-shadow: 0 0 8px rgba(40, 167, 69, 0.8);
+        }
+
+        .status-led-error {
+            background: #dc3545;
+            box-shadow: 0 0 8px rgba(220, 53, 69, 0.8);
+            animation: pulse-red 1s infinite;
+        }
+
+        @keyframes pulse-yellow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* State Panel */
+        .state-panel {
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .state-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .state-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .state-item-full {
+            grid-column: 1 / -1;
+        }
+
+        .state-item label {
+            font-size: 0.8em;
+            color: #888;
+            font-weight: 600;
+        }
+
+        .state-value {
+            background: #1e1e1e;
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            color: #4ec9b0;
+            border: 1px solid #3e3e3e;
+            word-break: break-all;
+        }
+
+        .state-value-error {
+            color: #f48771;
+        }
+
+        /* Event Log Panel */
+        .event-log-panel {
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .event-log {
+            background: #1e1e1e;
+            border: 1px solid #3e3e3e;
+            border-radius: 4px;
+            padding: 10px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+        }
+
+        .event-log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid #2d2d2d;
+            line-height: 1.4;
+        }
+
+        .event-log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .event-info {
+            color: #d4d4d4;
+        }
+
+        .event-success {
+            color: #4ec9b0;
+        }
+
+        .event-error {
+            color: #f48771;
+        }
+
+        .event-connection {
+            color: #569cd6;
+        }
+
+        .event-disconnection {
+            color: #ce9178;
+        }
+
+        .event-agent-selection {
+            color: #c586c0;
+        }
+
+        .event-audio {
+            color: #dcdcaa;
+        }
+
+        .event-message {
+            color: #9cdcfe;
+        }
+
+        .event-participant {
+            color: #b5cea8;
+        }
+
+        .event-agent {
+            color: #c586c0;
+            font-weight: bold;
+        }
+
+        .event-status {
+            color: #808080;
+        }
+
+        .instructions {
+            padding: 20px;
+            background: #fff3cd;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #856404;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 1200px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Letta Voice Agent - DEBUG VERSION</h1>
+            <div class="subtitle">Multi-Agent Voice Chat System</div>
+            <div class="debug-badge">COMPREHENSIVE DEBUGGING ENABLED</div>
+        </header>
+
+        <main>
+            <div class="left-panel">
+                <div id="status">Loading...</div>
+
+                <div class="controls">
+                    <button id="connectBtn" onclick="connect()" disabled>Connect</button>
+                    <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+                    <button id="refreshBtn" onclick="refreshAgents()">Refresh Agents</button>
+                </div>
+
+                <div class="agent-list-container">
+                    <h2>Available Agents</h2>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search agents by name or ID..." oninput="filterAgents()">
+                    </div>
+                    <div id="agentList">
+                        <div class="info">Loading agents...</div>
+                    </div>
+                </div>
+
+                <div id="agentInfo">
+                    <!-- Agent details will be shown here when selected -->
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="instructions">
+                    <h3>Instructions</h3>
+                    <ol>
+                        <li>Make sure the voice system is running:<br>
+                            <code>./start_voice_system.sh</code>
+                        </li>
+                        <li>Select an agent from the list</li>
+                        <li>Click <strong>Connect</strong></li>
+                        <li>Allow microphone access when prompted</li>
+                        <li>Wait for the agent to join</li>
+                        <li>Start speaking!</li>
+                    </ol>
+                    <p style="margin-top: 15px;">
+                        <strong>DEBUG MODE:</strong> Watch the debug panel on the right for detailed logging of all events.
+                    </p>
+                </div>
+            </div>
+
+            <div class="debug-panel">
+                <h2>Debug Status Panel</h2>
+
+                <!-- LED Status Indicators -->
+                <div class="led-grid">
+                    <div class="led-item">
+                        <span id="ledWebSocket" class="status-led status-led-disconnected" data-state="disconnected"></span>
+                        <label>WebSocket</label>
+                    </div>
+                    <div class="led-item">
+                        <span id="ledLiveKit" class="status-led status-led-disconnected" data-state="disconnected"></span>
+                        <label>LiveKit Room</label>
+                    </div>
+                    <div class="led-item">
+                        <span id="ledAgentSelection" class="status-led status-led-disconnected" data-state="disconnected"></span>
+                        <label>Agent Selection</label>
+                    </div>
+                    <div class="led-item">
+                        <span id="ledAudioInput" class="status-led status-led-disconnected" data-state="disconnected"></span>
+                        <label>Audio Input (Mic)</label>
+                    </div>
+                    <div class="led-item">
+                        <span id="ledAudioOutput" class="status-led status-led-disconnected" data-state="disconnected"></span>
+                        <label>Audio Output</label>
+                    </div>
+                    <div class="led-item">
+                        <span id="ledMessageSend" class="status-led status-led-disconnected" data-state="disconnected"></span>
+                        <label>Message Send</label>
+                    </div>
+                    <div class="led-item">
+                        <span id="ledMessageReceive" class="status-led status-led-disconnected" data-state="disconnected"></span>
+                        <label>Message Receive</label>
+                    </div>
+                    <div class="led-item">
+                        <span id="ledAgentResponse" class="status-led status-led-disconnected" data-state="disconnected"></span>
+                        <label>Agent Response</label>
+                    </div>
+                </div>
+
+                <!-- State Information Display -->
+                <div class="state-panel">
+                    <h3>Connection State</h3>
+                    <div class="state-grid">
+                        <div class="state-item">
+                            <label>Selected Agent ID:</label>
+                            <span id="stateAgentId" class="state-value" data-field="agent-id">-</span>
+                        </div>
+                        <div class="state-item">
+                            <label>Selected Agent Name:</label>
+                            <span id="stateAgentName" class="state-value" data-field="agent-name">-</span>
+                        </div>
+                        <div class="state-item">
+                            <label>Current Room Name:</label>
+                            <span id="stateRoomName" class="state-value" data-field="room-name">-</span>
+                        </div>
+                        <div class="state-item">
+                            <label>WebSocket URL:</label>
+                            <span id="stateWebSocketUrl" class="state-value" data-field="websocket-url">-</span>
+                        </div>
+                        <div class="state-item">
+                            <label>LiveKit Connection:</label>
+                            <span id="stateLiveKitState" class="state-value" data-field="livekit-state">-</span>
+                        </div>
+                        <div class="state-item">
+                            <label>Audio State:</label>
+                            <span id="stateAudioState" class="state-value" data-field="audio-state">-</span>
+                        </div>
+                        <div class="state-item">
+                            <label>Participant Count:</label>
+                            <span id="stateParticipantCount" class="state-value" data-field="participant-count">-</span>
+                        </div>
+                        <div class="state-item">
+                            <label>Last Message Sent:</label>
+                            <span id="stateLastMessageSent" class="state-value" data-field="last-message-sent">-</span>
+                        </div>
+                        <div class="state-item">
+                            <label>Last Message Received:</label>
+                            <span id="stateLastMessageReceived" class="state-value" data-field="last-message-received">-</span>
+                        </div>
+                        <div class="state-item state-item-full">
+                            <label>Error Message:</label>
+                            <span id="stateErrorMessage" class="state-value state-value-error" data-field="error-message">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Log -->
+                <div class="event-log-panel">
+                    <h3>Real-time Event Log</h3>
+                    <div class="controls" style="margin-bottom: 10px;">
+                        <button id="clearLogBtn" onclick="clearDebugLog()">Clear Log</button>
+                    </div>
+                    <div id="debugLog" class="event-log"></div>
+                </div>
+
+                <!-- Diagnostic Tools -->
+                <div class="diagnostic-controls">
+                    <h4>Diagnostic Tools</h4>
+                    <div class="controls">
+                        <button id="cleanRoomsBtn" class="diagnostic-btn" onclick="cleanLiveKitRooms()">Clean LiveKit Rooms</button>
+                        <button id="testVoiceBtn" class="diagnostic-btn" onclick="testVoiceSystem()">Test Voice System</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

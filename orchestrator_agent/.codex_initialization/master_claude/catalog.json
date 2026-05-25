@@ -1,0 +1,221 @@
+{
+  "source": "/home/adamsl/.master_claude",
+  "generated_at": "2026-05-15T11:01:49",
+  "agents_count": 40,
+  "skills_count": 10,
+  "commands_count": 65,
+  "agents": [
+    {
+      "name": "behavioral-transformation-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/behavioral-transformation-agent.md"
+    },
+    {
+      "name": "command-system-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/command-system-agent.md"
+    },
+    {
+      "name": "completion-gate",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/completion-gate.md"
+    },
+    {
+      "name": "component-implementation-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/component-implementation-agent.md"
+    },
+    {
+      "name": "convert-llm-claude-to-codex",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/convert-llm-claude-to-codex.md"
+    },
+    {
+      "name": "create_worktree_subagent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/create_worktree_subagent.md"
+    },
+    {
+      "name": "dashboard-server-debug",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/dashboard-server-debug.md"
+    },
+    {
+      "name": "devops-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/devops-agent.md"
+    },
+    {
+      "name": "docs-scraper",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/docs-scraper.md"
+    },
+    {
+      "name": "dynamic-agent-creator",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/dynamic-agent-creator.md"
+    },
+    {
+      "name": "enhanced-project-manager-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/enhanced-project-manager-agent.md"
+    },
+    {
+      "name": "enhanced-quality-gate",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/enhanced-quality-gate.md"
+    },
+    {
+      "name": "feature-implementation-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/feature-implementation-agent.md"
+    },
+    {
+      "name": "fetch-docs-haiku45",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/fetch-docs-haiku45.md"
+    },
+    {
+      "name": "fetch-docs-sonnet45",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/fetch-docs-sonnet45.md"
+    },
+    {
+      "name": "functional-testing-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/functional-testing-agent.md"
+    },
+    {
+      "name": "hook-integration-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/hook-integration-agent.md"
+    },
+    {
+      "name": "infrastructure-implementation-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/infrastructure-implementation-agent.md"
+    },
+    {
+      "name": "meta-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/meta-agent.md"
+    },
+    {
+      "name": "metrics-collection-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/metrics-collection-agent.md"
+    },
+    {
+      "name": "npx-package-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/npx-package-agent.md"
+    },
+    {
+      "name": "parsing-router-test-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/parsing-router-test-agent.md"
+    },
+    {
+      "name": "polish-implementation-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/polish-implementation-agent.md"
+    },
+    {
+      "name": "prd-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/prd-agent.md"
+    },
+    {
+      "name": "prd-mvp",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/prd-mvp.md"
+    },
+    {
+      "name": "prd-research-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/prd-research-agent.md"
+    },
+    {
+      "name": "quality-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/quality-agent.md"
+    },
+    {
+      "name": "readiness-gate",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/readiness-gate.md"
+    },
+    {
+      "name": "research-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/research-agent.md"
+    },
+    {
+      "name": "routing-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/routing-agent.md"
+    },
+    {
+      "name": "scout-report-suggest-fast",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/scout-report-suggest-fast.md"
+    },
+    {
+      "name": "scout-report-suggest",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/scout-report-suggest.md"
+    },
+    {
+      "name": "task-checker",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/task-checker.md"
+    },
+    {
+      "name": "task-executor",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/task-executor.md"
+    },
+    {
+      "name": "task-orchestrator",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/task-orchestrator.md"
+    },
+    {
+      "name": "tdd-validation-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/tdd-validation-agent.md"
+    },
+    {
+      "name": "testing-implementation-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/testing-implementation-agent.md"
+    },
+    {
+      "name": "van-maintenance-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/van-maintenance-agent.md"
+    },
+    {
+      "name": "vendor-normalizer",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/vendor-normalizer.md"
+    },
+    {
+      "name": "workflow-agent",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/agents/workflow-agent.md"
+    }
+  ],
+  "skills": [
+    {
+      "name": "agent-debug",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/skills/agent-debug",
+      "has_skill_md": true
+    },
+    {
+      "name": "bank-statement-parser",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/skills/bank-statement-parser",
+      "has_skill_md": true
+    },
+    {
+      "name": "create-worktree-skill",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/skills/create-worktree-skill",
+      "has_skill_md": true
+    },
+    {
+      "name": "letta-codex-debug",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/skills/letta-codex-debug",
+      "has_skill_md": true
+    },
+    {
+      "name": "mcp-filesystem-proxy",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/skills/mcp-filesystem-proxy",
+      "has_skill_md": true
+    },
+    {
+      "name": "meta-skill",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/skills/meta-skill",
+      "has_skill_md": true
+    },
+    {
+      "name": "smart-menu-skill",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/skills/smart-menu-skill",
+      "has_skill_md": true
+    },
+    {
+      "name": "video-processor",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/skills/video-processor",
+      "has_skill_md": true
+    },
+    {
+      "name": "voice-agent-expert",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/skills/voice-agent-expert",
+      "has_skill_md": true
+    },
+    {
+      "name": "worktree-manager-skill",
+      "path": "/home/adamsl/planner/a2a_communicating_agents/orchestrator_agent/.codex_initialization/master_claude/skills/worktree-manager-skill",
+      "has_skill_md": true
+    }
+  ]
+}

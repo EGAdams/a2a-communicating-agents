@@ -1,0 +1,855 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scissari — Live Thought Monitor</title>
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Terminal shell ── */
+    :root {
+      --bg:        #000000;
+      --fg:        #e8e8e8;
+      --fg-dim:    #666666;
+      --fg-faint:  #333333;
+      --accent:    #ffffff;
+      --status-ok: #e8e8e8;
+      --status-err:#888888;
+      --font: "Consolas", "Courier New", "Lucida Console", monospace;
+      --line-h: 1.45;
+      --font-sz: 13px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font);
+      font-size: var(--font-sz);
+      line-height: var(--line-h);
+      overflow: hidden;
+    }
+
+    /* ── Scanline overlay (MSI installer texture) ── */
+    body::after {
+      content: "";
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px, transparent 2px,
+        rgba(0,0,0,.18) 2px, rgba(0,0,0,.18) 4px
+      );
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* ── Layout ── */
+    #shell {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 0;
+    }
+
+    /* ── Header bar ── */
+    #header {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 14px 6px;
+      border-bottom: 1px solid #222;
+      background: #0a0a0a;
+      user-select: none;
+    }
+    #header .title {
+      font-size: 11px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--fg-dim);
+    }
+    #header .title span { color: var(--accent); }
+
+    #status-led {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      color: var(--fg-dim);
+      letter-spacing: .08em;
+    }
+    #led-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--fg-faint);
+      transition: background .4s;
+    }
+    #led-dot.ok  { background: var(--status-ok); box-shadow: 0 0 5px #fff6; }
+    #led-dot.err { background: var(--status-err); }
+    #led-dot.pulse { animation: blink 1.2s step-start infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── Scroll area ── */
+    #terminal {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 10px 14px 4px;
+      scroll-behavior: smooth;
+    }
+    /* hide scrollbar visually but keep functional */
+    #terminal::-webkit-scrollbar { width: 4px; }
+    #terminal::-webkit-scrollbar-track { background: transparent; }
+    #terminal::-webkit-scrollbar-thumb { background: #222; }
+
+    /* ── Lines ── */
+    .line {
+      white-space: pre-wrap;
+      word-break: break-word;
+      padding: 0;
+      opacity: 1;
+      transition: opacity .3s;
+    }
+    /* Age-based dimming: newest = full white, older = dimmer */
+    .line.age-1  { color: var(--fg); }
+    .line.age-2  { color: #b0b0b0; }
+    .line.age-3  { color: #888888; }
+    .line.age-4  { color: #555555; }
+    .line.age-5  { color: var(--fg-faint); }
+
+    .line.prefix-sys  { color: #555; font-style: italic; }
+    .line.prefix-err  { color: #999; }
+    .line.blank       { height: calc(var(--font-sz) * var(--line-h)); }
+
+    /* ── Cursor ── */
+    #cursor {
+      display: inline-block;
+      width: 7px; height: 13px;
+      background: var(--fg);
+      vertical-align: text-bottom;
+      margin-left: 1px;
+      animation: blink 1s step-start infinite;
+    }
+
+    /* ── Footer / progress bar ── */
+    #footer {
+      flex: 0 0 auto;
+      padding: 5px 14px;
+      border-top: 1px solid #181818;
+      background: #050505;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--fg-faint);
+      user-select: none;
+    }
+    #progress-bar {
+      flex: 1;
+      height: 2px;
+      background: #1a1a1a;
+      position: relative;
+      overflow: hidden;
+    }
+    #progress-fill {
+      position: absolute; left: 0; top: 0; bottom: 0;
+      background: #555;
+      width: 0%;
+      transition: width .6s linear;
+    }
+    /* Indeterminate shimmer when connecting */
+    #progress-fill.indeterminate {
+      width: 30% !important;
+      animation: shimmer 1.6s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(400%); }
+    }
+    #footer-label { min-width: 80px; text-align: right; }
+
+    /* ── Controls (visible when paused) ── */
+    #pause-banner {
+      display: none;
+      position: fixed;
+      bottom: 30px; left: 50%;
+      transform: translateX(-50%);
+      background: #111;
+      border: 1px solid #333;
+      color: #888;
+      font-size: 11px;
+      letter-spacing: .1em;
+      padding: 4px 14px;
+      pointer-events: none;
+      z-index: 100;
+    }
+    #pause-banner.visible { display: block; }
+  </style>
+</head>
+<body>
+
+<div id="shell">
+
+  <div id="header">
+    <div class="title">
+      <span>SCISSARI</span> &nbsp;·&nbsp; live thought monitor
+    </div>
+    <div id="status-led">
+      <div id="led-dot"></div>
+      <span id="status-text">STUB — NOT CONNECTED</span>
+    </div>
+  </div>
+
+  <div id="terminal" role="log" aria-live="polite" aria-label="Scissari thought stream">
+    <!-- lines injected here by ThoughtTerminal -->
+    <span id="cursor"></span>
+  </div>
+
+  <div id="footer">
+    <div id="progress-bar"><div id="progress-fill" class="indeterminate"></div></div>
+    <div id="footer-label" id="line-count">0 lines</div>
+  </div>
+
+</div>
+
+<div id="pause-banner">SCROLL PAUSED — click to resume</div>
+
+
+<script>
+"use strict";
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  INTERFACES  (GoF: program to interface, not implementation)
+//
+//  These are JS "interface contracts" via JSDoc + abstract base classes.
+//  Concrete implementations are STUBS — throw NotImplementedError until
+//  the real transport / data bridge is wired up.
+// ═══════════════════════════════════════════════════════════════════════════
+
+class NotImplementedError extends Error {
+  constructor(method) {
+    super(`${method}() is not implemented — provide a concrete IThoughtSource subclass`);
+    this.name = "NotImplementedError";
+  }
+}
+
+// ─── IThoughtEvent ──────────────────────────────────────────────────────────
+/**
+ * @typedef {Object} ThoughtEvent
+ * @property {string}  text       - Raw thought text chunk
+ * @property {'reasoning'|'assistant'|'system'|'error'} kind
+ * @property {number}  timestamp  - Unix ms
+ * @property {string}  [agentId]  - Source agent identifier
+ */
+
+// ─── IThoughtObserver  (Observer pattern) ───────────────────────────────────
+/**
+ * Receives thought events from an IThoughtSource.
+ * Implement all four methods.
+ */
+class IThoughtObserver {
+  /** @param {ThoughtEvent} event */
+  onThought(event)            { throw new NotImplementedError("onThought"); }
+  onConnected()               { throw new NotImplementedError("onConnected"); }
+  /** @param {string} reason */
+  onDisconnected(reason)      { throw new NotImplementedError("onDisconnected"); }
+  /** @param {Error} error */
+  onError(error)              { throw new NotImplementedError("onError"); }
+}
+
+// ─── IThoughtSource  (Subject / Observable) ─────────────────────────────────
+/**
+ * Produces ThoughtEvents and dispatches them to registered observers.
+ * Strategy: swap implementations (WebSocket, Tailscale, polling) without
+ * changing consumers.
+ */
+class IThoughtSource {
+  /** @returns {Promise<void>} */
+  async connect()             { throw new NotImplementedError("connect"); }
+  /** @returns {Promise<void>} */
+  async disconnect()          { throw new NotImplementedError("disconnect"); }
+  /** @param {IThoughtObserver} observer */
+  subscribe(observer)         { throw new NotImplementedError("subscribe"); }
+  /** @param {IThoughtObserver} observer */
+  unsubscribe(observer)       { throw new NotImplementedError("unsubscribe"); }
+  /** @returns {'disconnected'|'connecting'|'connected'|'error'} */
+  get state()                 { throw new NotImplementedError("state"); }
+}
+
+// ─── IThoughtRenderer ───────────────────────────────────────────────────────
+/**
+ * Renders ThoughtEvents into the UI.
+ * Decoupled from the source — only knows about display concerns.
+ */
+class IThoughtRenderer {
+  /** @param {ThoughtEvent} event */
+  render(event)               { throw new NotImplementedError("render"); }
+  /** @param {'connected'|'connecting'|'disconnected'|'error'} status
+   *  @param {string} [label] */
+  setStatus(status, label)    { throw new NotImplementedError("setStatus"); }
+  clear()                     { throw new NotImplementedError("clear"); }
+}
+
+// ─── IScrollController ──────────────────────────────────────────────────────
+/**
+ * Controls throttled auto-scroll behaviour for the terminal.
+ */
+class IScrollController {
+  /** @param {number} intervalMs - minimum ms between scroll steps */
+  setThrottle(intervalMs)     { throw new NotImplementedError("setThrottle"); }
+  pause()                     { throw new NotImplementedError("pause"); }
+  resume()                    { throw new NotImplementedError("resume"); }
+  /** @returns {boolean} */
+  get isPaused()              { throw new NotImplementedError("isPaused"); }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  ABSTRACT BASE  (Template Method pattern)
+//
+//  Concrete sources extend AbstractThoughtSource and override
+//  _doConnect / _doDisconnect only.
+// ═══════════════════════════════════════════════════════════════════════════
+
+class AbstractThoughtSource extends IThoughtSource {
+  constructor() {
+    super();
+    this._observers = new Set();
+    this._state     = "disconnected";
+  }
+
+  get state() { return this._state; }
+
+  subscribe(observer) {
+    if (!(observer instanceof IThoughtObserver))
+      throw new TypeError("observer must extend IThoughtObserver");
+    this._observers.add(observer);
+  }
+
+  unsubscribe(observer) { this._observers.delete(observer); }
+
+  async connect() {
+    this._state = "connecting";
+    await this._doConnect();
+    this._state = "connected";
+    this._notify(o => o.onConnected());
+  }
+
+  async disconnect() {
+    await this._doDisconnect();
+    this._state = "disconnected";
+    this._notify(o => o.onDisconnected("manual"));
+  }
+
+  // ── Override in subclass ──
+  async _doConnect()    { throw new NotImplementedError("_doConnect"); }
+  async _doDisconnect() { throw new NotImplementedError("_doDisconnect"); }
+
+  // ── Helpers for subclasses ──
+  _emit(event) { this._notify(o => o.onThought(event)); }
+  _emitError(err) { this._notify(o => o.onError(err)); }
+
+  _notify(fn) { this._observers.forEach(o => { try { fn(o); } catch(e) { console.error(e); } }); }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  STUB IMPLEMENTATIONS  (Strategy pattern — swap without touching consumers)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * WebSocket bridge running on WSL (ws://100.72.158.63:8765).
+ * Connects to thought_bridge.py which fans out lettabot reasoning chunks.
+ *
+ * Protocol: connect → receive ThoughtEvent JSON objects
+ * Server sends: { type:"thought", kind, text, timestamp, agentId }
+ *               { type:"connected"|"disconnected", text, timestamp }
+ *
+ * Auto-reconnects with exponential back-off (1s → 2s → 5s → 10s → 30s).
+ */
+class WebSocketThoughtSource extends AbstractThoughtSource {
+  /**
+   * @param {string} url  e.g. "ws://100.72.158.63:8765"
+   */
+  constructor(url) {
+    super();
+    this._url         = url;
+    this._ws          = null;
+    this._stopped     = false;
+    this._retryDelays = [1000, 2000, 5000, 10000, 30000];
+    this._retryIdx    = 0;
+    this._retryTimer  = null;
+  }
+
+  async _doConnect() {
+    this._stopped = false;
+    await this._openSocket();
+  }
+
+  async _doDisconnect() {
+    this._stopped = true;
+    if (this._retryTimer) { clearTimeout(this._retryTimer); this._retryTimer = null; }
+    this._ws?.close();
+    this._ws = null;
+  }
+
+  _openSocket() {
+    return new Promise((resolve, reject) => {
+      const ws = new WebSocket(this._url);
+      this._ws = ws;
+      let resolved = false;
+
+      ws.addEventListener('open', () => {
+        this._retryIdx = 0;
+        resolved = true;
+        resolve();
+      });
+
+      ws.addEventListener('message', ({ data }) => {
+        try {
+          const msg = JSON.parse(data);
+          if (msg.type === 'thought') {
+            this._emit({
+              text:      msg.text      ?? '',
+              kind:      msg.kind      ?? 'system',
+              timestamp: msg.timestamp ?? Date.now(),
+              agentId:   msg.agentId,
+            });
+          } else if (msg.type === 'connected' || msg.type === 'disconnected') {
+            // Bridge status event — surface as system thought
+            this._emit({ text: msg.text ?? msg.type, kind: 'system', timestamp: msg.timestamp ?? Date.now() });
+          }
+        } catch (e) {
+          console.warn('[WebSocketThoughtSource] Parse error:', e);
+        }
+      });
+
+      ws.addEventListener('error', (e) => {
+        if (!resolved) { resolved = true; reject(e); }
+      });
+
+      ws.addEventListener('close', ({ code, reason }) => {
+        this._ws = null;
+        if (!this._stopped) {
+          const delay = this._retryDelays[Math.min(this._retryIdx, this._retryDelays.length - 1)];
+          this._retryIdx++;
+          this._state = 'connecting';
+          this._notify(o => o.onDisconnected(`code=${code} — reconnecting in ${delay}ms`));
+          this._retryTimer = setTimeout(() => {
+            if (!this._stopped) this._openSocket().catch(() => {});
+          }, delay);
+        } else {
+          this._notify(o => o.onDisconnected(`code=${code}`));
+        }
+      });
+    });
+  }
+}
+
+/**
+ * STUB: Long-poll fallback (HTTP GET /thoughts/scissari?since=<ts>).
+ * For environments where WebSocket is blocked.
+ */
+class PollingThoughtSource extends AbstractThoughtSource {
+  /** @param {string} endpoint  REST endpoint base URL */
+  constructor(endpoint) {
+    super();
+    this._endpoint   = endpoint;
+    this._pollHandle = null;
+    this._lastTs     = 0;
+  }
+
+  async _doConnect() {
+    // TODO: start setInterval calling _poll()
+    throw new NotImplementedError("PollingThoughtSource._doConnect");
+  }
+
+  async _doDisconnect() {
+    // TODO: clearInterval(this._pollHandle)
+    throw new NotImplementedError("PollingThoughtSource._doDisconnect");
+  }
+
+  async _poll() {
+    // TODO: fetch(`${this._endpoint}?since=${this._lastTs}`)
+    //       parse array of ThoughtEvents, call this._emit() for each
+    throw new NotImplementedError("PollingThoughtSource._poll");
+  }
+}
+
+/**
+ * CONCRETE: Mock source — generates fake Scissari-style thoughts.
+ * Fully functional. Used to validate the terminal UI without a live server.
+ */
+class MockThoughtSource extends AbstractThoughtSource {
+  constructor({ intervalMs = 320, burstMin = 1, burstMax = 4 } = {}) {
+    super();
+    this._intervalMs = intervalMs;
+    this._burstMin   = burstMin;
+    this._burstMax   = burstMax;
+    this._handle     = null;
+    this._idx        = 0;
+  }
+
+  async _doConnect() {
+    this._handle = setInterval(() => this._tick(), this._intervalMs);
+  }
+
+  async _doDisconnect() {
+    clearInterval(this._handle);
+    this._handle = null;
+  }
+
+  _tick() {
+    const count = this._burstMin +
+      Math.floor(Math.random() * (this._burstMax - this._burstMin + 1));
+    for (let i = 0; i < count; i++) {
+      this._emit({
+        text:      MOCK_THOUGHTS[this._idx % MOCK_THOUGHTS.length],
+        kind:      Math.random() < .08 ? "system" : "reasoning",
+        timestamp: Date.now(),
+        agentId:   "scissari",
+      });
+      this._idx++;
+    }
+  }
+}
+
+const MOCK_THOUGHTS = [
+  "Scanning task queue — 3 items pending review.",
+  "Checking executor_run status on the remote host...",
+  "Memory block user_preferences loaded. Constraint: report failures immediately.",
+  "Tool call: read_file('/home/adamsl/letta-code/src/agent/message.ts')",
+  "Parsing conversation ID from response — fallback path active.",
+  "No active run detected on conv-dc095cc7. Proceeding.",
+  "Token refresh needed — checking ~/.codex/auth.json expiry.",
+  "gpt-5.3-codex model active. Reasoning effort: medium.",
+  "Dispatching send_message_to_agent_async → Quinn.",
+  "Waiting for Quinn acknowledgment... (timeout 90s)",
+  "WebSocket bus: jeri-agent subscribed to january-statements.",
+  "Orchestrator heartbeat OK — ack_queue cleared.",
+  "Cross-referencing report files in /home/adamsl/planner/...",
+  "Hailey health check: not yet sent — flagging for follow-up.",
+  "Redis client: NoopAsyncRedisClient (no host configured).",
+  "Letta 0.16.7 — conversation cache hit.",
+  "Applying planning fix: only tool_call_message resets inactivity timer.",
+  "executor_run exited 0 — deployment confirmed.",
+  "Scissari to user: task complete, no errors detected.",
+  "Entering idle state — monitoring for new Telegram messages.",
+  "Port 18283 → letta-bridge → letta-server (172.19.0.4). Orphan bypassed.",
+  "ChromaDB memory backend initialized with sentence-transformers/all-MiniLM-L6-v2.",
+  "a2a_communicating_agents stack: all 3 processes healthy.",
+  "Block user_preferences (v15): constraint updated and verified.",
+  "Reasoning: should I call fetch_webpage or web_search here?",
+  "Context window: 272000 tokens. Current usage: ~18k.",
+  "Rate limit headroom OK — proceeding with parallel tool calls.",
+  "Annotating memory: docker-proxy orphan issue documented.",
+  "✓ status.html deployed to americansjewelry.com/status.html",
+];
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  CONCRETE: ThoughtTerminal  (implements IThoughtObserver + IThoughtRenderer)
+// ═══════════════════════════════════════════════════════════════════════════
+
+class ThoughtTerminal extends IThoughtObserver {
+  constructor({ maxLines = 200 } = {}) {
+    super();
+    this._terminal  = document.getElementById("terminal");
+    this._cursor    = document.getElementById("cursor");
+    this._ledDot    = document.getElementById("led-dot");
+    this._statusTxt = document.getElementById("status-text");
+    this._lineCount = document.querySelector("#footer-label");
+    this._progFill  = document.querySelector("#progress-fill");
+    this._maxLines  = maxLines;
+    this._lines     = [];   // DOM line elements, newest last
+    this._total     = 0;
+    this._scroll    = new ThrottledScrollController(this._terminal, { intervalMs: 80 });
+
+    // Chunk accumulator: buffer word-level chunks into full sentences
+    this._chunkBuf        = "";
+    this._chunkKind       = "reasoning";
+    this._chunkFlushTimer = null;
+    this._FLUSH_MS        = 120;  // flush partial line after 120ms silence
+  }
+
+  // Flush the current chunk buffer as a line
+  _flushChunk() {
+    if (this._chunkFlushTimer) { clearTimeout(this._chunkFlushTimer); this._chunkFlushTimer = null; }
+    const text = this._chunkBuf.trim();
+    if (!text) return;
+    this._chunkBuf = "";
+    this._addLine(text, this._chunkKind === "system" ? "prefix-sys" : "age-1");
+  }
+
+  // Accumulate a chunk; flush on sentence-boundary or after silence
+  _accumulate(text, kind) {
+    // Always flush immediately on kind change
+    if (kind !== this._chunkKind && this._chunkBuf.trim()) {
+      this._flushChunk();
+    }
+    this._chunkKind = kind;
+    this._chunkBuf += text;
+
+    // Flush on sentence-ending punctuation followed by whitespace or end
+    if (/[.!?:]\s*$/.test(this._chunkBuf) || /\n/.test(this._chunkBuf)) {
+      this._flushChunk();
+      return;
+    }
+
+    // Otherwise schedule a flush after silence
+    if (this._chunkFlushTimer) clearTimeout(this._chunkFlushTimer);
+    this._chunkFlushTimer = setTimeout(() => this._flushChunk(), this._FLUSH_MS);
+  }
+
+  // ── IThoughtObserver ──
+
+  onThought(event) {
+    if (event.kind === "system") {
+      this._flushChunk();
+      this._addLine(event.text, "prefix-sys");
+    } else {
+      this._accumulate(event.text, event.kind);
+    }
+  }
+
+  onConnected() {
+    this._flushChunk();
+    this.setStatus("connected", "CONNECTED");
+    this._addLine("── stream open ──", "prefix-sys");
+  }
+
+  onDisconnected(reason) {
+    this._flushChunk();
+    this.setStatus("disconnected", `DISCONNECTED: ${reason}`);
+    this._addLine(`── stream closed (${reason}) ──`, "prefix-sys");
+  }
+
+  onError(error) {
+    this._flushChunk();
+    this.setStatus("error", `ERROR: ${error.message ?? error}`);
+    this._addLine(`[ERR] ${error.message ?? error}`, "prefix-err");
+  }
+
+  // ── IThoughtRenderer ──
+
+  setStatus(status, label) {
+    if (this._ledDot) {
+      this._ledDot.className = "";
+      switch (status) {
+        case "connected":    this._ledDot.classList.add("ok");    break;
+        case "connecting":   this._ledDot.classList.add("pulse"); break;
+        case "disconnected": break;
+        case "error":        this._ledDot.classList.add("err");   break;
+      }
+    }
+    if (this._statusTxt) this._statusTxt.textContent = label || status.toUpperCase();
+    if (this._progFill)  this._progFill.classList.toggle("indeterminate", status === "connecting");
+  }
+
+  clear() {
+    this._lines.forEach(l => l.remove());
+    this._lines = [];
+    this._total = 0;
+    this._updateLineCount();
+  }
+
+  // ── Internal ──
+
+  _addLine(text, cssClass = "age-1") {
+    const el = document.createElement("div");
+    el.className = `line ${cssClass}`;
+    el.textContent = text;
+    this._terminal.insertBefore(el, this._cursor);
+    this._lines.push(el);
+    this._total++;
+
+    this._ageLines();
+
+    // Cull oldest if over limit
+    while (this._lines.length > this._maxLines) {
+      this._lines.shift().remove();
+    }
+
+    this._updateLineCount();
+    this._scroll.nudge();
+  }
+
+  _ageLines() {
+    // Re-apply age classes so most-recent = age-1, older = age-2..5
+    const n = this._lines.length;
+    this._lines.forEach((el, i) => {
+      if (el.classList.contains("prefix-sys") || el.classList.contains("prefix-err")) return;
+      const age = n - i;        // 1 = newest
+      el.className = `line age-${Math.min(age, 5)}`;
+    });
+  }
+
+  _updateLineCount() {
+    this._lineCount.textContent = `${this._total} lines`;
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  CONCRETE: ThrottledScrollController  (implements IScrollController)
+// ═══════════════════════════════════════════════════════════════════════════
+
+class ThrottledScrollController extends IScrollController {
+  constructor(el, { intervalMs = 80 } = {}) {
+    super();
+    this._el         = el;
+    this._intervalMs = intervalMs;
+    this._paused     = false;
+    this._pending    = false;
+    this._lastScroll = 0;
+    this._banner     = document.getElementById("pause-banner");
+
+    // Pause on manual scroll up, resume on scroll to bottom
+    el.addEventListener("scroll", () => this._onManualScroll());
+  }
+
+  setThrottle(ms) { this._intervalMs = ms; }
+
+  pause() {
+    this._paused = true;
+    this._banner?.classList.add("visible");
+  }
+
+  resume() {
+    this._paused = false;
+    this._banner?.classList.remove("visible");
+    this._doScroll();
+  }
+
+  get isPaused() { return this._paused; }
+
+  /** Called whenever a new line is added */
+  nudge() {
+    if (this._paused) return;
+    const now = Date.now();
+    if (now - this._lastScroll < this._intervalMs) {
+      if (!this._pending) {
+        this._pending = true;
+        setTimeout(() => { this._pending = false; this._doScroll(); },
+          this._intervalMs - (now - this._lastScroll));
+      }
+      return;
+    }
+    this._doScroll();
+  }
+
+  _doScroll() {
+    this._lastScroll = Date.now();
+    this._el.scrollTo({ top: this._el.scrollHeight, behavior: "smooth" });
+  }
+
+  _onManualScroll() {
+    const { scrollTop, scrollHeight, clientHeight } = this._el;
+    const atBottom = scrollHeight - scrollTop - clientHeight < 40;
+    if (!atBottom && !this._paused) this.pause();
+    if (atBottom  &&  this._paused) this.resume();
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  FACADE: ThoughtMonitor
+//
+//  Single entry point — hides wiring between source and renderer.
+//  Swap source without touching anything else.
+// ═══════════════════════════════════════════════════════════════════════════
+
+class ThoughtMonitor {
+  /**
+   * @param {IThoughtSource}   source
+   * @param {IThoughtObserver} observer   (ThoughtTerminal is both observer + renderer)
+   */
+  constructor(source, observer) {
+    this._source   = source;
+    this._observer = observer;
+  }
+
+  async start() {
+    this._source.subscribe(this._observer);
+    this._observer.setStatus("connecting", "CONNECTING…");
+    await this._source.connect();
+  }
+
+  async stop() {
+    await this._source.disconnect();
+    this._source.unsubscribe(this._observer);
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  BOOT
+//
+//  Swap MockThoughtSource → WebSocketThoughtSource once the bridge is live.
+//
+//  WebSocket bridge plan:
+//    server: Python asyncio ws on WSL (Tailscale 100.72.158.63:8765)
+//    client: new WebSocketThoughtSource("ws://100.72.158.63:8765")
+//    protocol: { type:"thought", text, kind, timestamp, agentId }
+//    source:  tail lettabot reasoning_message chunks via hook / SSE
+// ═══════════════════════════════════════════════════════════════════════════
+
+window.addEventListener("DOMContentLoaded", async () => {
+  const terminal = new ThoughtTerminal({ maxLines: 300 });
+  terminal.setStatus("connecting", "CONNECTING…");
+
+  // ── Source selection ──
+  // ws:// requires a non-HTTPS origin (file://, http://).
+  // HTTPS pages must use wss:// — until TLS is set up on the bridge,
+  // use MockThoughtSource when served over https://.
+  // Override: append ?live to URL to force WebSocket (if wss:// bridge exists).
+  const BRIDGE_URL = "ws://100.72.158.63:8765";
+  const params = new URLSearchParams(window.location.search);
+  const forceLive = params.has("live");
+  const isSecurePage = window.location.protocol === "https:";
+
+  // Use live WebSocket when:
+  //   - opened as file:// (no mixed-content restrictions)
+  //   - opened as http:// (ws:// allowed)
+  //   - ?live param passed explicitly
+  // Use mock when served over https:// (ws:// would be blocked as mixed content)
+  const useMock = isSecurePage && !forceLive;
+
+  const source = useMock
+    ? new MockThoughtSource({ intervalMs: 280, burstMin: 1, burstMax: 3 })
+    : new WebSocketThoughtSource(BRIDGE_URL);
+
+  if (useMock) {
+    terminal._addLine("⚠ DEMO MODE — page served over HTTPS; ws:// blocked by browser.", "prefix-sys");
+    terminal._addLine("  To see live thoughts: download this file and open it locally.", "prefix-sys");
+    terminal._addLine("  Or open: http://100.72.158.63:8899/monitor  (HTTP server, coming soon)", "prefix-sys");
+  }
+
+  const monitor = new ThoughtMonitor(source, terminal);
+
+  try {
+    await monitor.start();
+  } catch (e) {
+    terminal.onError(e);
+    // Fallback to mock on any WebSocket failure (e.g. bridge not running)
+    if (!(source instanceof MockThoughtSource)) {
+      terminal._addLine("Bridge unreachable — switching to demo mode.", "prefix-sys");
+      const mock = new MockThoughtSource({ intervalMs: 280, burstMin: 1, burstMax: 3 });
+      const fallback = new ThoughtMonitor(mock, terminal);
+      await fallback.start();
+      window.__monitor = fallback;
+      window.__source  = mock;
+      return;
+    }
+  }
+
+  // Expose for console debugging
+  window.__monitor = monitor;
+  window.__source  = source;
+  window.__terminal = terminal;
+});
+</script>
+</body>
+</html>

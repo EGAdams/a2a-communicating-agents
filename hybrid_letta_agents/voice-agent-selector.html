@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Letta Voice Agent - Multi-Agent Selector</title>
+    <script type="module">
+        import { Room, RoomEvent, ConnectionState } from 'https://esm.sh/livekit-client@2.9.7';
+
+        // Configuration
+        const PROXY_URL = 'http://localhost:9000';
+        const LIVEKIT_URL = 'ws://localhost:7880';
+
+        // Token for dev mode (valid for 24 hours from 2026-02-16 13:38:52 UTC)
+        // NOTE: This token will expire. Regenerate with: ./update_voice_token.sh
+        const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiVXNlciIsInZpZGVvIjp7InJvb21Kb2luIjp0cnVlLCJyb29tIjoidGVzdC1yb29tIiwiY2FuUHVibGlzaCI6dHJ1ZSwiY2FuU3Vic2NyaWJlIjp0cnVlLCJjYW5QdWJsaXNoRGF0YSI6dHJ1ZX0sInN1YiI6InVzZXIxIiwiaXNzIjoiZGV2a2V5IiwibmJmIjoxNzcxMjQ5MTMyLCJleHAiOjE3NzEzMzU1MzJ9.aE1KBAMNkad9WuFKOxDxVqWNz8QQE508Rgjg2AYsJPU';
+        const PRIMARY_AGENT_NAME = 'Agent_66';
+        const PRIMARY_AGENT_WARNING = `Only ${PRIMARY_AGENT_NAME} is supported for LiveKit voice sessions.`;
+
+        let room;
+        let primaryAgentRecord = null;
+        let primaryAgentCardElement = null;
+        let selectedAgent = null;
+        let sessionId = Math.random().toString(36).substring(7);  // Unique session ID
+        let connectionRetries = 0;
+        const MAX_RETRIES = 3;
+        const AGENT_JOIN_TIMEOUT = 15000;  // 15 seconds to wait for agent
+        let agentJoinTimer = null;
+
+        async function requestAgentDispatch(roomName) {
+            try {
+                console.log('📡 Requesting agent dispatch to room...', roomName);
+                const dispatchResponse = await fetch(`${PROXY_URL}/api/dispatch-agent`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ room: roomName })
+                });
+                const data = await dispatchResponse.json();
+
+                if (!data.success) {
+                    console.warn('Dispatch warning:', data);
+                } else {
+                    console.log('✅ Agent dispatch requested:', data.message);
+                }
+                return data;
+            } catch (err) {
+                console.error('❌ Failed to request agent dispatch:', err);
+                return { success: false, error: err.message };
+            }
+        }
+
+        const status = document.getElementById('status');
+        const agentSelector = document.getElementById('agentSelector');
+        const agentInfo = document.getElementById('agentInfo');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const searchInput = document.getElementById('searchInput');
+        const agentList = document.getElementById('agentList');
+
+        // Generate a room name that includes the session ID
+        // This ensures each agent switch gets a clean room
+        function getRoomName() {
+            return `agent-${selectedAgent.id.substring(0, 8)}-${sessionId}`;
+        }
+
+        // Check microphone availability before connecting
+        async function checkMicrophoneAvailability() {
+            try {
+                console.log('🎤 Checking microphone availability...');
+
+                // Check if mediaDevices API is available
+                if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+                    throw new Error('Media devices API not available in this browser');
+                }
+
+                // Enumerate devices
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const audioInputs = devices.filter(device => device.kind === 'audioinput');
+
+                if (audioInputs.length === 0) {
+                    throw new Error('No microphone devices found. Please connect a microphone and try again.');
+                }
+
+                console.log(`✅ Found ${audioInputs.length} microphone device(s):`);
+                audioInputs.forEach((device, idx) => {
+                    console.log(`  ${idx + 1}. ${device.label || 'Unnamed microphone'} (${device.deviceId})`);
+                });
+
+                // Try to get user media to ensure permissions
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    // Stop the stream immediately - we just needed to check permissions
+                    stream.getTracks().forEach(track => track.stop());
+                    console.log('✅ Microphone permissions granted');
+                } catch (permErr) {
+                    throw new Error(`Microphone permission denied: ${permErr.message}`);
+                }
+
+                return true;
+            } catch (err) {
+                console.error('❌ Microphone check failed:', err);
+                throw err;
+            }
+        }
+
+        // Load agents on page load
+        window.addEventListener('DOMContentLoaded', loadAgents);
+
+        async function loadAgents() {
+            try {
+                status.textContent = 'Loading agents...';
+                status.className = '';
+
+                const response = await fetch(`${PROXY_URL}/api/v1/agents/`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch agents: ${response.statusText}`);
+                }
+
+                const agents = await response.json();
+                console.log(`Loaded ${agents.length} agents`);
+
+                // Store agents globally for filtering
+                window.allAgents = agents;
+
+                displayAgents(agents);
+                status.textContent = `Loaded ${agents.length} agents. Select one to begin.`;
+                status.className = 'info';
+
+            } catch (err) {
+                status.textContent = 'Error loading agents: ' + err.message;
+                status.className = 'error';
+                console.error('Error loading agents:', err);
+                agentList.innerHTML = '<div class="error">Failed to load agents. Make sure Letta server is running on port 8283.</div>';
+            }
+        }
+
+        function displayAgents(agents) {
+            agentList.innerHTML = '';
+
+            if (agents.length === 0) {
+                agentList.innerHTML = '<div class="info">No agents found.</div>';
+                return;
+            }
+
+            let localPrimaryAgent = null;
+            let localPrimaryCard = null;
+
+            agents.forEach(agent => {
+                const agentCard = document.createElement('div');
+                agentCard.className = 'agent-card';
+                agentCard.dataset.agentId = agent.id;
+                agentCard.dataset.agentName = agent.name || 'Unnamed Agent';
+
+                const name = agent.name || 'Unnamed Agent';
+                const id = agent.id;
+                const created = agent.created_at ? new Date(agent.created_at).toLocaleDateString() : 'Unknown';
+                const isPrimaryAgent = name === PRIMARY_AGENT_NAME;
+
+                // Get model info if available
+                let modelInfo = '';
+                if (agent.llm_config && agent.llm_config.model) {
+                    modelInfo = `<div class="agent-model">Model: ${agent.llm_config.model}</div>`;
+                }
+
+                agentCard.innerHTML = `
+                    <div class="agent-name">${name}</div>
+                    <div class="agent-id">${id}</div>
+                    <div class="agent-created">Created: ${created}</div>
+                    ${modelInfo}
+                `;
+
+                if (isPrimaryAgent) {
+                    agentCard.innerHTML += `<div class="agent-lock-pill">Locked voice agent</div>`;
+                }
+
+                if (isPrimaryAgent) {
+                    agentCard.classList.add('primary-agent');
+                    agentCard.onclick = () => selectAgent(agent, agentCard);
+                    localPrimaryAgent = agent;
+                    localPrimaryCard = agentCard;
+                } else {
+                    agentCard.classList.add('disabled');
+                    agentCard.title = PRIMARY_AGENT_WARNING;
+                    agentCard.onclick = () => {
+                        status.textContent = PRIMARY_AGENT_WARNING;
+                        status.className = 'warning';
+                        if (primaryAgentRecord && primaryAgentCardElement) {
+                            selectAgent(primaryAgentRecord, primaryAgentCardElement);
+                        } else if (localPrimaryAgent && localPrimaryCard) {
+                            selectAgent(localPrimaryAgent, localPrimaryCard);
+                        }
+                    };
+                }
+
+                agentList.appendChild(agentCard);
+            });
+
+            if (localPrimaryAgent) {
+                primaryAgentRecord = localPrimaryAgent;
+                primaryAgentCardElement = localPrimaryCard;
+            }
+
+            if (!primaryAgentRecord) {
+                status.textContent = `${PRIMARY_AGENT_NAME} not found. Please recreate it via the Letta CLI before connecting.`;
+                status.className = 'error';
+                connectBtn.disabled = true;
+                return;
+            }
+
+            const primaryAlreadySelected = selectedAgent && selectedAgent.id === primaryAgentRecord.id;
+            if (!primaryAlreadySelected) {
+                selectAgent(primaryAgentRecord, primaryAgentCardElement);
+                status.textContent = `${PRIMARY_AGENT_NAME} locked in. Click Connect to start voice chat.`;
+                status.className = 'info';
+            }
+        }
+
+        function selectAgent(agent, cardElement = null) {
+            selectedAgent = agent;
+
+            // Highlight selected card
+            document.querySelectorAll('.agent-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            const highlightCard = cardElement || document.querySelector(`.agent-card[data-agent-id="${agent.id}"]`);
+            if (highlightCard) {
+                highlightCard.classList.add('selected');
+            }
+
+            // Show agent info
+            agentInfo.style.display = 'block';
+            agentInfo.innerHTML = `
+                <h3>Selected Agent</h3>
+                <div><strong>Name:</strong> ${agent.name || 'Unnamed'}</div>
+                <div><strong>ID:</strong> ${agent.id}</div>
+                <div><strong>Created:</strong> ${agent.created_at ? new Date(agent.created_at).toLocaleString() : 'Unknown'}</div>
+                ${agent.llm_config ? `
+                    <div><strong>Model:</strong> ${agent.llm_config.model || 'Unknown'}</div>
+                    ${agent.llm_config.model_endpoint_type ? `<div><strong>Provider:</strong> ${agent.llm_config.model_endpoint_type}</div>` : ''}
+                ` : ''}
+                ${agent.embedding_config ? `<div><strong>Embeddings:</strong> ${agent.embedding_config.embedding_model || 'Unknown'}</div>` : ''}
+            `;
+
+            // If already connected, disconnect and reconnect with new agent in new room
+            if (room && room.state === 'connected') {
+                status.textContent = 'Switching agent...';
+                status.className = 'info';
+                console.log(`📤 Switching from old agent to ${agent.name}...`);
+                window.disconnect().then(() => {
+                    console.log('✅ Disconnected from old agent room, now connecting to new one...');
+                    setTimeout(() => window.connect(), 1000);  // Give backend time to clean up
+                });
+            } else {
+                connectBtn.disabled = false;
+                status.textContent = `Agent "${agent.name}" selected. Click Connect to start voice chat.`;
+                status.className = 'info';
+            }
+        }
+
+        window.connect = async function() {
+            if (!selectedAgent) {
+                status.textContent = 'Please select an agent first!';
+                status.className = 'error';
+                return;
+            }
+
+            try {
+                status.textContent = 'Checking microphone...';
+                status.className = '';
+                connectBtn.disabled = true;
+
+                // Check microphone availability BEFORE connecting
+                await checkMicrophoneAvailability();
+
+                status.textContent = 'Connecting...';
+
+                // Create room with options
+                room = new Room({
+                    adaptiveStream: true,
+                    dynacast: true,
+                    disconnectOnPageLeave: true,
+                });
+
+                // Add event listeners
+                room.on(RoomEvent.SignalConnected, () => {
+                    console.log('✅ Signal connection established');
+                });
+
+                room.on(RoomEvent.Connected, () => {
+                    console.log('✅ Room connected successfully');
+                    status.textContent = 'Connected! Waiting for agent...';
+                    status.className = 'connected';
+                });
+
+                room.on(RoomEvent.Reconnecting, () => {
+                    console.log('🔄 Reconnecting...');
+                    status.textContent = 'Reconnecting...';
+                });
+
+                room.on(RoomEvent.Disconnected, (reason) => {
+                    console.log('❌ Disconnected:', reason);
+                    connectBtn.disabled = false;
+                    disconnectBtn.disabled = true;
+                });
+
+                room.on(RoomEvent.ConnectionStateChanged, (state) => {
+                    console.log('Connection state:', state);
+                });
+
+                room.on('participantConnected', (participant) => {
+                    console.log('👤 Participant connected:', participant.identity);
+
+                    // Clear the agent join timeout timer
+                    if (agentJoinTimer) {
+                        clearTimeout(agentJoinTimer);
+                        agentJoinTimer = null;
+                    }
+
+                    // Reset retry counter on successful connection
+                    connectionRetries = 0;
+
+                    status.textContent = `Agent "${selectedAgent.name}" connected! Start speaking...`;
+                    status.className = 'connected';
+                });
+
+                room.on('trackSubscribed', (track, publication, participant) => {
+                    console.log('🎵 Track subscribed:', track.kind, 'from', participant.identity);
+                    if (track.kind === 'audio') {
+                        const audioElement = track.attach();
+                        document.body.appendChild(audioElement);
+                        console.log('🔊 Audio element attached');
+                    }
+                });
+
+                room.on('trackUnsubscribed', (track) => {
+                    console.log('Track unsubscribed:', track.kind);
+                    track.detach();
+                });
+
+                // Send agent selection to voice system via data channel after connecting
+                room.on(RoomEvent.Connected, () => {
+                    const encoder = new TextEncoder();
+                    const data = encoder.encode(JSON.stringify({
+                        type: 'agent_selection',
+                        agent_id: selectedAgent.id,
+                        agent_name: selectedAgent.name
+                    }));
+                    room.localParticipant.publishData(data, { reliable: true });
+                    console.log('📤 Sent agent selection:', selectedAgent.id);
+                });
+
+                // CRITICAL FIX: Use "test-room" to match the JWT token
+                // The token is hardcoded to allow "test-room" only
+                // Dynamic room names were causing browser and agent to join different rooms!
+                const roomName = 'test-room';
+                console.log('🔗 Connecting to room:', roomName, 'on', LIVEKIT_URL);
+                console.log('⚠️  Using fixed room name "test-room" to match JWT token');
+
+                // Connect with timeout
+                const connectPromise = room.connect(LIVEKIT_URL, TOKEN, {
+                    autoSubscribe: true,
+                });
+
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Connection timeout after 15s')), 15000)
+                );
+
+                await Promise.race([connectPromise, timeoutPromise]);
+
+                console.log('✅ Connected to room:', room.name);
+
+                // Request the agent to join immediately
+                await requestAgentDispatch(roomName);
+                console.log('🎤 Enabling microphone...');
+
+                // Enable microphone with explicit error handling
+                try {
+                    await room.localParticipant.setMicrophoneEnabled(true);
+                    console.log('✅ Microphone enabled successfully');
+                } catch (micErr) {
+                    console.error('❌ Failed to enable microphone:', micErr);
+                    throw new Error(`Microphone error: ${micErr.message}`);
+                }
+
+                // Check for existing participants
+                const existingParticipants = Array.from(room.remoteParticipants.values());
+                console.log('👥 Existing participants:', existingParticipants.length);
+
+                if (existingParticipants.length > 0) {
+                    // Agent already in room
+                    status.textContent = `Agent "${selectedAgent.name}" connected! Start speaking...`;
+                    status.className = 'connected';
+                    connectionRetries = 0;  // Reset on success
+                } else {
+                    // Waiting for agent to join
+                    status.textContent = 'Connected! Waiting for agent to join...';
+                    status.className = 'connected';
+
+                    // *** AUTO-RECOVERY: Set timeout for agent join ***
+                    console.log(`⏰ Starting ${AGENT_JOIN_TIMEOUT/1000}s timeout for agent to join...`);
+                    agentJoinTimer = setTimeout(async () => {
+                        console.error('⏱️ Agent join timeout! No agent joined the room.');
+
+                        await requestAgentDispatch(roomName);
+
+                        if (connectionRetries < MAX_RETRIES) {
+                            connectionRetries++;
+                            const backoffDelay = 1000 * connectionRetries; // Exponential backoff: 1s, 2s, 3s
+
+                            status.textContent = `Agent didn't join. Retrying (${connectionRetries}/${MAX_RETRIES}) in ${backoffDelay/1000}s...`;
+                            status.className = 'error';
+
+                            console.log(`🔄 Retry ${connectionRetries}/${MAX_RETRIES} after ${backoffDelay}ms delay...`);
+
+                            // Disconnect and reconnect with fresh room
+                            await window.disconnect();
+
+                            // Generate new session ID for completely fresh room
+                            sessionId = Math.random().toString(36).substring(7);
+                            console.log(`🆕 Generated new session ID: ${sessionId}`);
+
+                            setTimeout(() => {
+                                console.log('🔄 Reconnecting with fresh room...');
+                                window.connect();
+                            }, backoffDelay);
+
+                        } else {
+                            // Max retries exceeded
+                            status.textContent = `Failed to connect after ${MAX_RETRIES} attempts. Please check voice agent logs and try again.`;
+                            status.className = 'error';
+                            console.error('❌ Max retries exceeded. Voice agent may not be running.');
+
+                            // Disconnect
+                            await window.disconnect();
+
+                            // Provide troubleshooting guidance
+                            alert(
+                                'Voice agent failed to join after multiple attempts.\n\n' +
+                                'Troubleshooting steps:\n' +
+                                '1. Check that voice agent is running: ps aux | grep letta_voice_agent\n' +
+                                '2. Check voice agent logs: tail -f /tmp/letta_voice_agent.log\n' +
+                                '3. Restart the voice system: ./restart_voice_system.sh\n' +
+                                '4. Check LiveKit server logs: tail -f /tmp/livekit.log'
+                            );
+                        }
+                    }, AGENT_JOIN_TIMEOUT);
+                }
+
+                disconnectBtn.disabled = false;
+                console.log('✅ Setup complete - ready to talk');
+
+            } catch (err) {
+                status.textContent = 'Error: ' + err.message;
+                status.className = 'error';
+                connectBtn.disabled = false;
+                console.error('❌ Connection error:', err);
+            }
+        };
+
+        window.disconnect = async function() {
+            // Clear any pending agent join timeout
+            if (agentJoinTimer) {
+                clearTimeout(agentJoinTimer);
+                agentJoinTimer = null;
+                console.log('⏰ Cleared agent join timeout');
+            }
+
+            if (room) {
+                try {
+                    // Publish room cleanup message to notify backend
+                    const encoder = new TextEncoder();
+                    const cleanupData = encoder.encode(JSON.stringify({
+                        type: 'room_cleanup',
+                        timestamp: new Date().toISOString()
+                    }));
+                    await room.localParticipant.publishData(cleanupData, { reliable: true });
+                    console.log('📤 Sent room cleanup notification');
+                } catch (e) {
+                    console.error('Error sending cleanup notification:', e);
+                }
+
+                // CRITICAL FIX: Give backend more time to process cleanup and reset agent state
+                // Increased from 500ms to 2000ms to ensure agent fully resets before reconnect
+                console.log('⏳ Waiting 2 seconds for backend cleanup and agent reset...');
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                await room.disconnect();
+                room = null;
+                status.textContent = 'Disconnected';
+                status.className = '';
+                connectBtn.disabled = selectedAgent ? false : true;
+                disconnectBtn.disabled = true;
+                console.log('Disconnected from room');
+            }
+        };
+
+        window.refreshAgents = function() {
+            loadAgents();
+        };
+
+        window.filterAgents = function() {
+            const searchTerm = searchInput.value.toLowerCase();
+            if (!window.allAgents) return;
+
+            let filtered = window.allAgents.filter(agent => {
+                const name = (agent.name || '').toLowerCase();
+                const id = (agent.id || '').toLowerCase();
+                return name.includes(searchTerm) || id.includes(searchTerm);
+            });
+
+            const primaryAgent = window.allAgents.find(agent => (agent.name || '') === PRIMARY_AGENT_NAME);
+            if (primaryAgent && !filtered.some(agent => agent.id === primaryAgent.id)) {
+                filtered = [primaryAgent, ...filtered];
+            }
+
+            displayAgents(filtered);
+        };
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        #status {
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-size: 0.95em;
+        }
+
+        #status.connected {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        #status.error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+
+        #status.info {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+
+        #status.warning {
+            background: #fff3cd;
+            border-left-color: #ff9800;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #connectBtn {
+            background: #28a745;
+            color: white;
+        }
+
+        #connectBtn:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        #disconnectBtn {
+            background: #dc3545;
+            color: white;
+        }
+
+        #disconnectBtn:hover:not(:disabled) {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+        }
+
+        #refreshBtn {
+            background: #17a2b8;
+            color: white;
+        }
+
+        #refreshBtn:hover {
+            background: #138496;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        #searchInput {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        #searchInput:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .agent-list-container {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .agent-list-container h2 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.3em;
+        }
+
+        #agentList {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .agent-card {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .agent-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .agent-card.disabled:hover {
+            border-color: #e0e0e0;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .agent-card:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .agent-card.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .agent-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .agent-id {
+            font-size: 0.85em;
+            color: #666;
+            font-family: monospace;
+            margin-bottom: 5px;
+        }
+
+        .agent-created {
+            font-size: 0.85em;
+            color: #888;
+        }
+
+        .agent-model {
+            font-size: 0.85em;
+            color: #667eea;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .agent-lock-pill {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #667eea;
+            color: white;
+            border-radius: 999px;
+            font-size: 0.75em;
+            margin-top: 8px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        #agentInfo {
+            display: none;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        #agentInfo h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        #agentInfo > div {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        #agentInfo strong {
+            color: #333;
+        }
+
+        #agentInfo ul {
+            margin-top: 5px;
+            margin-left: 20px;
+        }
+
+        .instructions {
+            padding: 20px;
+            background: #fff3cd;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #856404;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 900px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Letta Voice Agent</h1>
+            <div class="subtitle">Multi-Agent Voice Chat System</div>
+        </header>
+
+        <main>
+            <div class="left-panel">
+                <div id="status">Loading...</div>
+
+                <div class="controls">
+                    <button id="connectBtn" onclick="connect()" disabled>Connect</button>
+                    <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+                    <button id="refreshBtn" onclick="refreshAgents()">Refresh Agents</button>
+                </div>
+
+                <div class="agent-list-container">
+                    <h2>Available Agents</h2>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search agents by name or ID..." oninput="filterAgents()">
+                    </div>
+                    <div id="agentList">
+                        <div class="info">Loading agents...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div id="agentInfo">
+                    <!-- Agent details will be shown here when selected -->
+                </div>
+
+                <div class="instructions">
+                    <h3>Instructions</h3>
+                    <ol>
+                        <li>Make sure the voice system is running:<br>
+                            <code>./start_voice_system.sh</code>
+                        </li>
+                        <li>Select an agent from the list</li>
+                        <li>Click <strong>Connect</strong></li>
+                        <li>Allow microphone access when prompted</li>
+                        <li>Wait for the agent to join</li>
+                        <li>Start speaking!</li>
+                    </ol>
+                    <p style="margin-top: 15px;">
+                        <strong>Tip:</strong> Check the browser console (F12) for detailed logs.
+                    </p>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
