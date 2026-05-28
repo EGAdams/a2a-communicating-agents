@@ -8,3 +8,4 @@ __pycache__/
 .venv
 *.backup
 hello_world
+.claude-collective/metrics/*

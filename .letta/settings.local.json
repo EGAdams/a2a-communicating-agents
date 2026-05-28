@@ -1,0 +1,13 @@
+{
+  "lastAgent": "agent-5955b0c2-7922-4ffe-9e43-b116053b80fa",
+  "sessionsByServer": {
+    "100.80.49.10:8283": {
+      "agentId": "agent-5955b0c2-7922-4ffe-9e43-b116053b80fa",
+      "conversationId": "conv-f3652fb8-b6dc-47c1-920c-502c0871b3c4"
+    }
+  },
+  "lastSession": {
+    "agentId": "agent-5955b0c2-7922-4ffe-9e43-b116053b80fa",
+    "conversationId": "conv-f3652fb8-b6dc-47c1-920c-502c0871b3c4"
+  }
+}
