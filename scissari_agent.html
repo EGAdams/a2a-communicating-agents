@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scissari — Agent Console</title>
+  <style>
+    /* ── Tokens ── */
+    :root {
+      --bg:         #0b1120;
+      --surface:    #111827;
+      --surface2:   #172033;
+      --border:     #1e2d45;
+      --border2:    #273a56;
+      --text:       #dde6f4;
+      --muted:      #7a93b8;
+      --dim:        #3e5271;
+      --accent:     #60a5fa;
+      --accent2:    #3b82f6;
+      --green:      #34d399;
+      --yellow:     #fbbf24;
+      --orange:     #fb923c;
+      --purple:     #a78bfa;
+      --red:        #f87171;
+      --teal:       #2dd4bf;
+      --sidebar-w:  180px;
+      --hdr-h:      42px;
+      --font-ui:    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono:  "Fira Code", "Cascadia Code", "Consolas", monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font-ui); font-size: 13px; }
+
+    /* ── Layout shell ── */
+    #shell { display: flex; height: 100vh; }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: var(--sidebar-w);
+      flex: 0 0 var(--sidebar-w);
+      background: #080f1c;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow: hidden;
+    }
+    #sidebar-header {
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    #sidebar-header .agent-name {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    #sidebar-header .agent-name span { color: var(--accent); }
+    #led-row {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 10px; color: var(--dim); margin-top: 5px;
+    }
+    #led {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--dim); transition: background .4s;
+    }
+    #led.ok  { background: var(--green); box-shadow: 0 0 6px rgba(52,211,153,.5); }
+    #led.err { background: var(--red); }
+
+    /* ── Nav groups ── */
+    .nav-group { padding: 10px 10px 6px; }
+    .nav-group-label {
+      font-size: 9px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--dim); padding: 0 4px 6px; display: block;
+    }
+    .nav-btn {
+      display: block; width: 100%; background: none; border: none;
+      color: var(--muted); font: inherit; font-size: 12px;
+      padding: 7px 10px; border-radius: 5px; cursor: pointer;
+      text-align: left; transition: background .15s, color .15s;
+      margin-bottom: 2px;
+    }
+    .nav-btn:hover { background: var(--surface2); color: var(--text); }
+    .nav-btn.active { background: var(--surface2); color: var(--accent); font-weight: 600; }
+    .nav-btn.back-btn { color: var(--muted); }
+    .nav-btn.back-btn:hover { background: var(--surface2); color: var(--text); }
+    .nav-btn .icon { margin-right: 7px; opacity: .7; }
+    .nav-btn.active .icon { opacity: 1; }
+
+    #nav-main  { display: flex; flex-direction: column; }
+    #nav-config { display: none; flex-direction: column; }
+
+    /* ── Main content ── */
+    #main {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Content header ── */
+    #content-header {
+      height: var(--hdr-h);
+      flex: 0 0 var(--hdr-h);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      gap: 10px;
+    }
+    #content-header .breadcrumb {
+      font-size: 11px; color: var(--muted); letter-spacing: .04em;
+    }
+    #content-header .breadcrumb .crumb-active { color: var(--text); font-weight: 600; }
+
+    /* ── View area ── */
+    #views {
+      flex: 1 1 auto;
+      overflow: hidden;
+      position: relative;
+    }
+    .view { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+    .view.active { display: flex; flex-direction: column; }
+
+    /* ── Placeholder panel (Tool Calls / Messages) ── */
+    .placeholder-panel {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 10px;
+      color: var(--dim);
+    }
+    .placeholder-panel .ph-icon { font-size: 36px; opacity: .3; }
+    .placeholder-panel .ph-text { font-size: 12px; letter-spacing: .06em; }
+    .placeholder-panel .ph-sub  { font-size: 10px; color: var(--dim); opacity: .6; }
+
+    /* ── Thoughts: iframe ── */
+    #view-thoughts iframe {
+      flex: 1; border: none; width: 100%; height: 100%;
+    }
+
+    /* ── Configuration content area ── */
+    #config-content {
+      flex: 1; overflow-y: auto; overflow-x: hidden;
+      padding: 28px 32px;
+      scroll-behavior: smooth;
+    }
+
+    /* config sections */
+    .cfg-section { display: none; }
+    .cfg-section.active { display: block; }
+
+    /* ── Config home ── */
+    #cfg-home .home-title {
+      font-size: 1.5rem; font-weight: 700; color: var(--accent);
+      margin-bottom: 4px;
+    }
+    #cfg-home .home-sub { color: var(--muted); font-size: 12px; margin-bottom: 28px; }
+    #cfg-home .home-cards {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .home-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .home-card:hover { border-color: var(--accent2); background: var(--surface2); }
+    .home-card .hc-icon { font-size: 20px; margin-bottom: 8px; }
+    .home-card .hc-label { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .home-card .hc-desc  { font-size: 11px; color: var(--muted); }
+
+    /* ── Section content styles ── */
+    .cfg-section h1 { font-size: 1.4rem; color: var(--accent); margin-bottom: 4px; font-weight: 700; }
+    .cfg-section .section-sub { color: var(--muted); font-size: 11px; margin-bottom: 24px; }
+    .cfg-section h2 { font-size: 1rem; color: var(--purple); margin: 22px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
+    .cfg-section h3 { font-size: 0.9rem; color: var(--orange); margin: 14px 0 6px; }
+    .cfg-section p  { font-size: 12px; line-height: 1.65; color: var(--text); margin-bottom: 8px; }
+    .cfg-section ul, .cfg-section ol { padding-left: 1.4rem; margin-bottom: 8px; }
+    .cfg-section li { font-size: 12px; line-height: 1.6; color: var(--text); margin-bottom: 3px; }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--orange);
+      background: rgba(251,146,60,.07);
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    pre {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.65;
+      background: #060c18;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 14px;
+      overflow-x: auto;
+      margin: 8px 0 14px;
+      color: var(--text);
+    }
+    pre .k  { color: var(--accent); }
+    pre .v  { color: var(--green); }
+    pre .c  { color: var(--dim); font-style: italic; }
+    pre .p  { color: var(--purple); }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 13px 16px;
+      margin: 10px 0;
+    }
+    .card.accent  { border-left: 3px solid var(--accent); }
+    .card.green   { border-left: 3px solid var(--green); }
+    .card.yellow  { border-left: 3px solid var(--yellow); }
+    .card.purple  { border-left: 3px solid var(--purple); }
+    .card.orange  { border-left: 3px solid var(--orange); }
+
+    table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 11px; }
+    th { background: var(--surface2); color: var(--accent); text-align: left; padding: 7px 10px; border: 1px solid var(--border); }
+    td { padding: 5px 10px; border: 1px solid var(--border); vertical-align: top; color: var(--text); }
+    tr:nth-child(even) td { background: rgba(255,255,255,.015); }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 8px; border-radius: 10px;
+      font-size: 10px; font-weight: 600;
+    }
+    .pill.accent { background: rgba(96,165,250,.12); color: var(--accent); border: 1px solid rgba(96,165,250,.3); }
+    .pill.yellow { background: rgba(251,191,36,.1); color: var(--yellow); border: 1px solid rgba(251,191,36,.3); }
+    .pill.green  { background: rgba(52,211,153,.1); color: var(--green); border: 1px solid rgba(52,211,153,.3); }
+    .pill.red    { background: rgba(248,113,113,.1); color: var(--red); border: 1px solid rgba(248,113,113,.3); }
+
+    .note {
+      background: rgba(96,165,250,.05);
+      border: 1px solid rgba(96,165,250,.2);
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-size: 11px;
+      color: var(--muted);
+      margin: 8px 0;
+    }
+    .note strong { color: var(--accent); }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 8px 0; }
+    @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+
+    /* ── Scanline overlay ── */
+    body::before {
+      content: "";
+      position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+      background: repeating-linear-gradient(to bottom, transparent 0, transparent 2px, rgba(0,0,0,.06) 2px, rgba(0,0,0,.06) 4px);
+    }
+  </style>
+</head>
+<body>
+<div id="shell">
+
+  <!-- ═══ SIDEBAR ═══════════════════════════════════════════════════════ -->
+  <aside id="sidebar">
+    <div id="sidebar-header">
+      <div class="agent-name"><span>Scissari</span> · Console</div>
+      <div id="led-row"><div id="led"></div><span id="led-label">idle</span></div>
+    </div>
+
+    <!-- Main nav -->
+    <div class="nav-group" id="nav-main">
+      <span class="nav-group-label">Agent</span>
+      <button class="nav-btn active" data-view="tool-calls">
+        <span class="icon">⚡</span>Tool Calls
+      </button>
+      <button class="nav-btn" data-view="messages">
+        <span class="icon">💬</span>Messages
+      </button>
+      <button class="nav-btn" data-view="thoughts">
+        <span class="icon">🧠</span>Thoughts
+      </button>
+      <button class="nav-btn" id="btn-config-enter" data-view="configuration">
+        <span class="icon">⚙</span>Configuration
+      </button>
+    </div>
+
+    <!-- Config sub-nav -->
+    <div class="nav-group" id="nav-config">
+      <span class="nav-group-label">Configuration</span>
+      <button class="nav-btn back-btn" id="btn-config-back">
+        <span class="icon">←</span>Back
+      </button>
+      <button class="nav-btn active" data-cfg="home">
+        <span class="icon">🏠</span>Home
+      </button>
+      <button class="nav-btn" data-cfg="identity">
+        <span class="icon">🪪</span>Identity
+      </button>
+      <button class="nav-btn" data-cfg="messaging">
+        <span class="icon">📨</span>Messaging
+      </button>
+      <button class="nav-btn" data-cfg="a2a-rpc">
+        <span class="icon">🔗</span>A2A JSON-RPC
+      </button>
+      <button class="nav-btn" data-cfg="skills">
+        <span class="icon">🛠</span>Skills
+      </button>
+      <button class="nav-btn" data-cfg="letta-tools">
+        <span class="icon">🔧</span>Letta Tools
+      </button>
+      <button class="nav-btn" data-cfg="decision">
+        <span class="icon">🗺</span>Decision Guide
+      </button>
+      <button class="nav-btn" data-cfg="start-stop">
+        <span class="icon">▶</span>Start / Stop
+      </button>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN AREA ═════════════════════════════════════════════════════ -->
+  <div id="main">
+
+    <!-- breadcrumb header -->
+    <div id="content-header">
+      <span class="breadcrumb">
+        Scissari &nbsp;›&nbsp; <span id="crumb" class="crumb-active">Tool Calls</span>
+      </span>
+    </div>
+
+    <!-- views -->
+    <div id="views">
+
+      <!-- Tool Calls -->
+      <div class="view active" id="view-tool-calls">
+        <div class="placeholder-panel">
+          <div class="ph-icon">⚡</div>
+          <div class="ph-text">Tool Calls</div>
+          <div class="ph-sub">Live tool call stream · coming soon</div>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="view" id="view-messages">
+        <div class="placeholder-panel">
+          <div class="ph-icon">💬</div>
+          <div class="ph-text">Messages</div>
+          <div class="ph-sub">Agent message history · coming soon</div>
+        </div>
+      </div>
+
+      <!-- Thoughts -->
+      <div class="view" id="view-thoughts">
+        <iframe
+          src="https://americansjewelry.com/monitor_thoughts_plan.html"
+          title="Scissari live thought stream"
+          allow="scripts"
+        ></iframe>
+      </div>
+
+      <!-- Configuration wrapper -->
+      <div class="view" id="view-configuration">
+        <div id="config-content">
+
+          <!-- ─── HOME ─────────────────────────────────────────────── -->
+          <div class="cfg-section active" id="cfg-home">
+            <div class="home-title">Jeri — Configuration</div>
+            <div class="home-sub">Letta-native · A2A-compatible · January statements analyst &amp; claude-code-sdk-ts expert</div>
+            <div class="home-cards">
+              <div class="home-card" data-goto="identity">
+                <div class="hc-icon">🪪</div>
+                <div class="hc-label">Identity</div>
+                <div class="hc-desc">Who Jeri is, agent ID, A2A URL, model</div>
+              </div>
+              <div class="home-card" data-goto="messaging">
+                <div class="hc-icon">📨</div>
+                <div class="hc-label">Messaging</div>
+                <div class="hc-desc">Letta native send_letta_message approach</div>
+              </div>
+              <div class="home-card" data-goto="a2a-rpc">
+                <div class="hc-icon">🔗</div>
+                <div class="hc-label">A2A JSON-RPC</div>
+                <div class="hc-desc">SendMessage · GetTask · SSE streaming flow</div>
+              </div>
+              <div class="home-card" data-goto="skills">
+                <div class="hc-icon">🛠</div>
+                <div class="hc-label">Skills</div>
+                <div class="hc-desc">Five capability quick-reference table</div>
+              </div>
+              <div class="home-card" data-goto="letta-tools">
+                <div class="hc-icon">🔧</div>
+                <div class="hc-label">Letta Tools</div>
+                <div class="hc-desc">All 10 tools Jeri has — which are A2A exposed</div>
+              </div>
+              <div class="home-card" data-goto="decision">
+                <div class="hc-icon">🗺</div>
+                <div class="hc-label">Decision Guide</div>
+                <div class="hc-desc">When to use Letta native vs A2A HTTP</div>
+              </div>
+              <div class="home-card" data-goto="start-stop">
+                <div class="hc-icon">▶</div>
+                <div class="hc-label">Start / Stop</div>
+                <div class="hc-desc">Shell commands to run Jeri's A2A server</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ─── IDENTITY ──────────────────────────────────────────── -->
+          <div class="cfg-section" id="cfg-identity">
+            <h1>Identity</h1>
+            <p class="section-sub">Who Jeri is and where to find her</p>
+
+            <div class="card accent">
+              <p><strong>Jeri</strong> is a stateful Letta agent and A2A HTTP server running on Mom's Machine. She has two areas of mastery:</p>
+              <ul>
+                <li><strong>Financial analyst</strong> — January bank statement analysis for the <code>rol_finances</code> project</li>
+                <li><strong>SDK expert</strong> — deep knowledge of <code>claude-code-sdk-ts</code> at <code>/home/adamsl/claude-code-sdk-ts</code></li>
+              </ul>
+            </div>
+
+            <div class="grid2">
+              <div class="card">
+                <h3>Core Identity</h3>
+                <table>
+                  <tr><th>Field</th><th>Value</th></tr>
+                  <tr><td>Letta name</td><td><code>jeri-agent</code></td></tr>
+                  <tr><td>Letta agent ID</td><td><code>agent-1caa2fff-5188-4f7e-996b-34146de966e3</code></td></tr>
+                  <tr><td>Model</td><td><code>google_ai/gemini-2.5-flash</code></td></tr>
+                  <tr><td>A2A server</td><td><code>http://10.0.0.143:9001</code></td></tr>
+                  <tr><td>Statements dir</td><td><code>.../bank_statements/january</code></td></tr>
+                  <tr><td>Artifact root</td><td><code>~/jeri_artifacts</code></td></tr>
+                </table>
+              </div>
+              <div class="card">
+                <h3>Five Core Capabilities</h3>
+                <ul>
+                  <li><code>analyze_statement</code> — deep analysis</li>
+                  <li><code>extract_transactions</code> — structured rows</li>
+                  <li><code>summarize_statement</code> — NL summary</li>
+                  <li><code>prepare_report_snippet</code> — Markdown report</li>
+                  <li><code>find_anomalies</code> — z-score + LLM</li>
+                </ul>
+                <p style="font-size:11px;color:var(--muted);margin-top:8px">All five require <code>statementPath</code> in context.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ─── MESSAGING ─────────────────────────────────────────── -->
+          <div class="cfg-section" id="cfg-messaging">
+            <h1>Messaging</h1>
+            <p class="section-sub">Letta native approach — conversational asks</p>
+
+            <div class="card green">
+              <p>Use your <code>send_letta_message</code> tool for conversational asks, SDK questions, or when you don't need structured JSON output.</p>
+            </div>
+
+            <h2>How to Call</h2>
+            <pre><span class="c"># Use your send_letta_message tool:</span>
+send_letta_message(
+    agent_id=<span class="v">"agent-1caa2fff-5188-4f7e-996b-34146de966e3"</span>,
+    message=<span class="v">"Summarize the January Chase statement at /home/adamsl/.../chase_jan.txt"</span>
+)</pre>
+
+            <h2>Good Use Cases</h2>
+            <ul>
+              <li>Asking about the <code>claude-code-sdk-ts</code> API — <em>"What does <code>claude().withRole()</code> return?"</em></li>
+              <li>Quick summary without needing structured JSON</li>
+              <li>Checking Jeri's status or statement availability</li>
+              <li>Delegating follow-up questions after initial A2A analysis</li>
+            </ul>
+          </div>
+
+          <!-- ─── A2A JSON-RPC ──────────────────────────────────────── -->
+          <div class="cfg-section" id="cfg-a2a-rpc">
+            <h1>A2A JSON-RPC Flow</h1>
+            <p class="section-sub">Structured tasks with statementPath · streaming · task polling</p>
+
+            <div class="card yellow">
+              <p>Use the A2A HTTP endpoint for structured output, streaming, or when you need to track task state. All financial skills run through this path.</p>
+            </div>
+
+            <h2>Step 1 — SendMessage</h2>
+            <pre>POST <span class="v">http://10.0.0.143:9001/</span>
+Content-Type: application/json
+
+{
+  <span class="k">"jsonrpc"</span>: <span class="v">"2.0"</span>,
+  <span class="k">"method"</span>: <span class="v">"SendMessage"</span>,
+  <span class="k">"id"</span>: <span class="v">"my-task-1"</span>,
+  <span class="k">"params"</span>: {
+    <span class="k">"message"</span>: {
+      <span class="k">"role"</span>: <span class="v">"ROLE_USER"</span>,
+      <span class="k">"parts"</span>: [{ <span class="k">"text"</span>: <span class="v">"Summarize the January statement"</span> }]
+    },
+    <span class="k">"skill"</span>: <span class="v">"summarize_statement"</span>,
+    <span class="k">"context"</span>: {
+      <span class="k">"statementPath"</span>: <span class="v">"/home/adamsl/rol_finances/.../chase_jan.txt"</span>
+    }
+  }
+}</pre>
+
+            <h2>Step 2 — Poll GetTask</h2>
+            <pre>POST <span class="v">http://10.0.0.143:9001/</span>
+{
+  <span class="k">"jsonrpc"</span>: <span class="v">"2.0"</span>,
+  <span class="k">"method"</span>: <span class="v">"GetTask"</span>,
+  <span class="k">"id"</span>: <span class="v">"poll-1"</span>,
+  <span class="k">"params"</span>: { <span class="k">"id"</span>: <span class="v">"&lt;task-uuid-from-step-1&gt;"</span> }
+}
+<span class="c">// States: SUBMITTED → WORKING → COMPLETED (or FAILED)</span>
+<span class="c">// result.result holds Jeri's answer when COMPLETED</span></pre>
+
+            <h3>Task State Flow</h3>
+            <p>
+              <span class="pill accent">SUBMITTED</span> →
+              <span class="pill yellow">WORKING</span> →
+              <span class="pill green">COMPLETED</span> /
+              <span class="pill red">FAILED</span>
+            </p>
+
+            <h2>Streaming (SSE) — SendStreamingMessage</h2>
+            <pre>POST <span class="v">http://10.0.0.143:9001/</span>
+{
+  <span class="k">"jsonrpc"</span>: <span class="v">"2.0"</span>,
+  <span class="k">"method"</span>: <span class="v">"SendStreamingMessage"</span>,
+  <span class="k">"id"</span>: <span class="v">"stream-1"</span>,
+  <span class="k">"params"</span>: { <span class="c">/* same params as SendMessage */</span> }
+}
+<span class="c">// Response: text/event-stream SSE</span>
+<span class="c">// data: {"type":"chunk","taskId":"...","content":"token..."}</span>
+<span class="c">// data: {"type":"done","taskId":"...","status":"COMPLETED"}</span></pre>
+
+            <h2>Utility Endpoints</h2>
+            <div class="grid2">
+              <div class="card">
+                <h3>AgentCard</h3>
+                <pre>GET http://10.0.0.143:9001/.well-known/agent.json</pre>
+              </div>
+              <div class="card">
+                <h3>Health Check</h3>
+                <pre>GET http://10.0.0.143:9001/health</pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- ─── SKILLS ────────────────────────────────────────────── -->
+          <div class="cfg-section" id="cfg-skills">
+            <h1>Skills Quick Reference</h1>
+            <p class="section-sub">All five require <code>statementPath</code> in A2A context</p>
+
+            <table>
+              <tr>
+                <th>Skill ID</th><th>Required context</th><th>Returns</th><th>Model</th>
+              </tr>
+              <tr>
+                <td><code>analyze_statement</code></td>
+                <td><code>statementPath</code></td>
+                <td>JSON — dates, balances, merchant breakdown</td>
+                <td>sonnet</td>
+              </tr>
+              <tr>
+                <td><code>extract_transactions</code></td>
+                <td><code>statementPath</code></td>
+                <td>JSON array of transaction objects</td>
+                <td>sonnet</td>
+              </tr>
+              <tr>
+                <td><code>summarize_statement</code></td>
+                <td><code>statementPath</code></td>
+                <td>Natural language string</td>
+                <td>sonnet</td>
+              </tr>
+              <tr>
+                <td><code>prepare_report_snippet</code></td>
+                <td><code>statementPath</code></td>
+                <td>Markdown table + narrative (saved as artifact)</td>
+                <td>opus</td>
+              </tr>
+              <tr>
+                <td><code>find_anomalies</code></td>
+                <td><code>statementPath</code></td>
+                <td>JSON array of anomaly objects with severity</td>
+                <td>sonnet</td>
+              </tr>
+            </table>
+
+            <div class="note">
+              <strong>January statements directory:</strong>
+              <code>/home/adamsl/rol_finances/readable_documents/bank_statements/january</code>
+            </div>
+          </div>
+
+          <!-- ─── LETTA TOOLS ───────────────────────────────────────── -->
+          <div class="cfg-section" id="cfg-letta-tools">
+            <h1>Letta Tools</h1>
+            <p class="section-sub">All 10 tools attached to jeri-agent on the Letta server</p>
+
+            <div class="card purple">
+              <table>
+                <tr><th>Tool</th><th>What it does</th><th>A2A exposed?</th></tr>
+                <tr>
+                  <td><code>read_sdk_file</code></td>
+                  <td>Read any file from the claude-code-sdk-ts repo</td>
+                  <td>No — internal</td>
+                </tr>
+                <tr>
+                  <td><code>list_sdk_dir</code></td>
+                  <td>List a directory in the SDK repo</td>
+                  <td>No — internal</td>
+                </tr>
+                <tr>
+                  <td><code>run_typescript</code></td>
+                  <td>Run npm scripts (build / test / typecheck / lint)</td>
+                  <td>No — security boundary</td>
+                </tr>
+                <tr>
+                  <td><code>analyze_statement</code></td>
+                  <td>Delegates → A2A → deep statement analysis</td>
+                  <td>Yes</td>
+                </tr>
+                <tr>
+                  <td><code>extract_transactions</code></td>
+                  <td>Delegates → A2A → structured extraction</td>
+                  <td>Yes</td>
+                </tr>
+                <tr>
+                  <td><code>summarize_statement</code></td>
+                  <td>Delegates → A2A → natural language summary</td>
+                  <td>Yes</td>
+                </tr>
+                <tr>
+                  <td><code>prepare_report_snippet</code></td>
+                  <td>Delegates → A2A → Markdown report</td>
+                  <td>Yes</td>
+                </tr>
+                <tr>
+                  <td><code>find_anomalies</code></td>
+                  <td>Delegates → A2A → anomaly detection</td>
+                  <td>Yes</td>
+                </tr>
+                <tr>
+                  <td><code>send_a2a_task</code></td>
+                  <td>Call any other A2A agent by URL</td>
+                  <td>No — outbound only</td>
+                </tr>
+                <tr>
+                  <td><code>send_letta_message</code></td>
+                  <td>Message any Letta agent by ID</td>
+                  <td>No — outbound only</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- ─── DECISION GUIDE ────────────────────────────────────── -->
+          <div class="cfg-section" id="cfg-decision">
+            <h1>Decision Guide</h1>
+            <p class="section-sub">When to use Letta native messaging vs A2A HTTP</p>
+
+            <table>
+              <tr><th>Situation</th><th>Use</th></tr>
+              <tr>
+                <td>Quick question about a statement or the SDK</td>
+                <td>Letta native — <code>send_letta_message</code></td>
+              </tr>
+              <tr>
+                <td>Need structured JSON (transactions, anomalies)</td>
+                <td>A2A <code>SendMessage</code> + <code>GetTask</code> poll</td>
+              </tr>
+              <tr>
+                <td>Want output as it streams token by token</td>
+                <td>A2A <code>SendStreamingMessage</code> (SSE)</td>
+              </tr>
+              <tr>
+                <td>Background task — fire and check later</td>
+                <td>A2A <code>SendMessage</code> → store task ID → poll later</td>
+              </tr>
+              <tr>
+                <td>Cancel an in-flight task</td>
+                <td>A2A <code>CancelTask</code></td>
+              </tr>
+              <tr>
+                <td>Discover Jeri's capabilities programmatically</td>
+                <td><code>GET /well-known/agent.json</code> (AgentCard)</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- ─── START / STOP ──────────────────────────────────────── -->
+          <div class="cfg-section" id="cfg-start-stop">
+            <h1>Start / Stop</h1>
+            <p class="section-sub">Shell commands to manage Jeri's A2A server on Mom's Machine</p>
+
+            <div class="card orange">
+              <p>The Letta agent is always registered. The A2A HTTP server must be started separately from <code>/home/adamsl/claude-code-sdk-ts</code>:</p>
+            </div>
+
+            <h2>Start</h2>
+            <pre><span class="c"># From /home/adamsl/claude-code-sdk-ts</span>
+cd agents/jeri && bash start_jeri_agent.sh</pre>
+
+            <h2>Stop</h2>
+            <pre>bash stop_jeri_agent.sh</pre>
+
+            <h2>Development Mode (hot reload)</h2>
+            <pre>npx tsx /home/adamsl/claude-code-sdk-ts/agents/jeri/index.ts</pre>
+
+            <h2>Register in Letta (first-time only)</h2>
+            <pre><span class="c"># From /home/adamsl/claude-code-sdk-ts, with rol_finances venv active</span>
+python3 create-letta-agent.py</pre>
+
+            <div class="note">
+              <strong>Note:</strong> Jeri's A2A server at <code>http://10.0.0.143:9001</code> must be running for all five financial skills to work.
+              Verify with <code>GET http://10.0.0.143:9001/health</code> before delegating tasks.
+            </div>
+          </div>
+
+        </div><!-- #config-content -->
+      </div><!-- #view-configuration -->
+
+    </div><!-- #views -->
+  </div><!-- #main -->
+</div><!-- #shell -->
+
+<script>
+  const ledEl    = document.getElementById('led');
+  const ledLabel = document.getElementById('led-label');
+  const crumbEl  = document.getElementById('crumb');
+  const navMain  = document.getElementById('nav-main');
+  const navConfig= document.getElementById('nav-config');
+
+  const LABELS = {
+    'tool-calls':    'Tool Calls',
+    'messages':      'Messages',
+    'thoughts':      'Thoughts',
+    'configuration': 'Configuration',
+  };
+  const CFG_LABELS = {
+    home: 'Home', identity: 'Identity', messaging: 'Messaging',
+    'a2a-rpc': 'A2A JSON-RPC Flow', skills: 'Skills',
+    'letta-tools': 'Letta Tools', decision: 'Decision Guide',
+    'start-stop': 'Start / Stop',
+  };
+
+  // ── Main tab navigation ─────────────────────────────────────────────
+  function activateView(id) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const v = document.getElementById('view-' + id);
+    if (v) v.classList.add('active');
+    crumbEl.textContent = LABELS[id] ?? id;
+  }
+
+  navMain.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.view;
+      if (id === 'configuration') {
+        // Switch to config sub-nav
+        navMain.style.display = 'none';
+        navConfig.style.display = 'flex';
+        activateCfgSection('home');
+        activateView('configuration');
+        return;
+      }
+      navMain.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activateView(id);
+    });
+  });
+
+  // ── Config sub-nav ──────────────────────────────────────────────────
+  function activateCfgSection(id) {
+    document.querySelectorAll('.cfg-section').forEach(s => s.classList.remove('active'));
+    const s = document.getElementById('cfg-' + id);
+    if (s) s.classList.add('active');
+    // Highlight active nav btn
+    navConfig.querySelectorAll('.nav-btn[data-cfg]').forEach(b => {
+      b.classList.toggle('active', b.dataset.cfg === id);
+    });
+    crumbEl.textContent = 'Configuration › ' + (CFG_LABELS[id] ?? id);
+    document.getElementById('config-content').scrollTop = 0;
+  }
+
+  navConfig.querySelectorAll('.nav-btn[data-cfg]').forEach(btn => {
+    btn.addEventListener('click', () => activateCfgSection(btn.dataset.cfg));
+  });
+
+  // Home cards → navigate to section
+  document.querySelectorAll('.home-card[data-goto]').forEach(card => {
+    card.addEventListener('click', () => activateCfgSection(card.dataset.goto));
+  });
+
+  // Back button
+  document.getElementById('btn-config-back').addEventListener('click', () => {
+    navConfig.style.display = 'none';
+    navMain.style.display = 'flex';
+    // Restore whichever was active before; default to tool-calls
+    navMain.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    navMain.querySelector('[data-view="tool-calls"]').classList.add('active');
+    activateView('tool-calls');
+  });
+
+  // ── LED status indicator ─────────────────────────────────────────────
+  function setLed(state, label) {
+    ledEl.className = state;
+    ledLabel.textContent = label;
+  }
+
+  // Poll Jeri's health endpoint every 30s
+  function pingJeri() {
+    fetch('http://10.0.0.143:9001/health', { signal: AbortSignal.timeout(4000) })
+      .then(r => r.json())
+      .then(d => setLed(d.ok ? 'ok' : 'err', d.ok ? 'Jeri online' : 'Jeri error'))
+      .catch(() => setLed('err', 'Jeri offline'));
+  }
+  pingJeri();
+  setInterval(pingJeri, 30000);
+</script>
+</body>
+</html>
