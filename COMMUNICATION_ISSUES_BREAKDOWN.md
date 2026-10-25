@@ -1,12 +1,16 @@
 # Agent Communication Issues - Root Cause Analysis
 
-## Executive Summary
+## Executive Summary (status updated 2026-05-26: ALL THREE RESOLVED ✅)
 
-The "Transport rejected the message" error has **THREE separate root causes**:
+The "Transport rejected the message" error had **THREE separate root causes** — all now fixed:
 
-1. **Timing Issue**: Orchestrator started before WebSocket server existed
-2. **Architecture Issue**: `inbox()` and `post_message()` create new transport instances
-3. **No Connection Sharing**: Each function call creates new RAG transport fallback
+1. **Timing Issue**: Orchestrator started before WebSocket server existed → ✅ Fixed by `start_all.sh` ordering
+2. **Architecture Issue**: `inbox()` / `post_message()` created new transport instances → ✅ Fixed by `TransportManager` singleton
+3. **No Connection Sharing**: Each function call created new RAG transport → ✅ Fixed by `TransportManager` singleton
+
+Additionally fixed 2026-05-26:
+4. **Wrong WebSocket URL**: `.env` had Scissari Tailscale IP instead of `127.0.0.1` → fixed in `.env`
+5. **`send_agent_message.py` polling**: used `read_messages()` which always returns `[]` on WebSocket → rewrote as single async session
 
 ## Problem Breakdown (GoF Pattern: Chain of Responsibility)
 

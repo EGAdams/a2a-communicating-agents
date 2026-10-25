@@ -4,7 +4,7 @@
 #
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOG_DIR="$SCRIPT_DIR/../logs"
+LOG_DIR="$SCRIPT_DIR/logs"
 PID_FILE="$LOG_DIR/letta_bridge.pid"
 LOG_FILE="$LOG_DIR/letta_bridge.log"
 
@@ -23,13 +23,18 @@ fi
 
 echo "🚀 Starting Letta Bridge..."
 
+# Activate project venv if not already in a venv
 if [ -z "${VIRTUAL_ENV:-}" ] || [ ! -x "$VIRTUAL_ENV/bin/python" ]; then
-    echo "Activate the desired environment with 'so' before starting the Letta bridge." >&2
-    exit 1
+    if [ -f "$SCRIPT_DIR/venv/bin/activate" ]; then
+        source "$SCRIPT_DIR/venv/bin/activate"
+    else
+        echo "Activate the desired environment with 'so' before starting the Letta bridge." >&2
+        exit 1
+    fi
 fi
 
 PYTHON_BIN="$VIRTUAL_ENV/bin/python"
-export PYTHONPATH="$SCRIPT_DIR/..:${PYTHONPATH:-}"
+export PYTHONPATH="$SCRIPT_DIR:${PYTHONPATH:-}"
 
 cd "$SCRIPT_DIR"
 setsid nohup "$PYTHON_BIN" -u letta_bridge.py > "$LOG_FILE" 2>&1 </dev/null &

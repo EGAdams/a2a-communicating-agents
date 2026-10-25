@@ -4,7 +4,7 @@
 #
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOG_DIR="$SCRIPT_DIR/../logs"
+LOG_DIR="$SCRIPT_DIR/logs"
 PID_FILE="$LOG_DIR/websocket_server.pid"
 LOG_FILE="$LOG_DIR/websocket.log"
 
@@ -26,7 +26,7 @@ fi
 echo "🚀 Starting WebSocket Message Board Server..."
 
 # Activate the correct venv
-source "$SCRIPT_DIR/../nonprofit_finance_db/receipt_scanning_tools/venv/bin/activate"
+source "$SCRIPT_DIR/venv/bin/activate"
 
 # Start server in background
 cd "$SCRIPT_DIR"

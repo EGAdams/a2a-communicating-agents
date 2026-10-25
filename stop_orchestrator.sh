@@ -2,36 +2,20 @@
 # Stop the Orchestrator Agent
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PLANNER_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-
-cd "$PLANNER_ROOT"
+LOG_DIR="$SCRIPT_DIR/logs"
 
 # Check for PID file in logs directory
-if [ -f logs/orchestrator.pid ]; then
-    PID=$(cat logs/orchestrator.pid)
+if [ -f "$LOG_DIR/orchestrator.pid" ]; then
+    PID=$(cat "$LOG_DIR/orchestrator.pid")
 
     if ps -p $PID > /dev/null 2>&1; then
         echo "Stopping Orchestrator Agent (PID: $PID)..."
         kill $PID
-        rm logs/orchestrator.pid
+        rm "$LOG_DIR/orchestrator.pid"
         echo "Orchestrator Agent stopped"
     else
         echo "Orchestrator Agent is not running (stale PID: $PID)"
-        rm logs/orchestrator.pid
-    fi
-elif [ -f logs/a2a_system.pids ]; then
-    # Check system-wide PIDs file
-    if grep -q "ORCHESTRATOR_PID" logs/a2a_system.pids; then
-        PID=$(grep "ORCHESTRATOR_PID" logs/a2a_system.pids | cut -d'=' -f2)
-        if ps -p $PID > /dev/null 2>&1; then
-            echo "Stopping Orchestrator Agent (PID: $PID from system PIDs)..."
-            kill $PID
-            echo "Orchestrator Agent stopped"
-        else
-            echo "Orchestrator Agent is not running (stale PID: $PID)"
-        fi
-    else
-        echo "Orchestrator PID not found in system PIDs file"
+        rm "$LOG_DIR/orchestrator.pid"
     fi
 else
     # Fallback: try to kill by process name

@@ -4,7 +4,7 @@
 #
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOG_DIR="$SCRIPT_DIR/../logs"
+LOG_DIR="$SCRIPT_DIR/logs"
 PID_FILE="$LOG_DIR/websocket_server.pid"
 
 if [ ! -f "$PID_FILE" ]; then

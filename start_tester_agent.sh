@@ -19,7 +19,7 @@ fi
 mkdir -p logs
 
 # Start the agent in the background using virtual environment
-source /home/adamsl/planner/nonprofit_finance_db/receipt_scanning_tools/venv/bin/activate
+source "$SCRIPT_DIR/venv/bin/activate"
 setsid nohup python -u tester_agent/main.py >> logs/tester_agent.log 2>&1 </dev/null &
 PID=$!
 

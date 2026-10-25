@@ -15,6 +15,14 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+# Activate project venv so scripts that check $VIRTUAL_ENV work
+if [ -f "$SCRIPT_DIR/venv/bin/activate" ]; then
+    source "$SCRIPT_DIR/venv/bin/activate"
+else
+    echo -e "${RED}❌ Project venv not found at $SCRIPT_DIR/venv — run: python3 -m venv venv && pip install -e .${NC}"
+    exit 1
+fi
+
 # Step 1: Start WebSocket Server
 echo -e "${YELLOW}📡 Starting WebSocket server...${NC}"
 bash start_websocket_server.sh
@@ -60,7 +68,7 @@ sleep 1
 
 # Step 6: Start Jeri Agent
 echo -e "${YELLOW}💰 Starting Jeri agent...${NC}"
-bash start_jeri_agent.sh
+bash start_jeri_agent.sh || echo -e "${YELLOW}⚠️  Jeri agent skipped (see above for details)${NC}"
 
 # Give everything a moment to stabilize
 sleep 2
@@ -71,16 +79,12 @@ echo -e "${GREEN}✅ All agents started successfully!${NC}"
 echo -e "${GREEN}================================${NC}"
 echo ""
 echo "Verify status:"
-echo "  - WebSocket:  tail -f ../logs/websocket.log"
-echo "  - Letta bridge: tail -f ../logs/letta_bridge.log"
-echo "  - Orchestrator: tail -f ../logs/orchestrator.log"
-echo "  - Coder: tail -f logs/coder_agent.log"
-echo "  - Tester: tail -f logs/tester_agent.log"
-echo "  - Jeri: tail -f logs/jeri_agent.log"
-echo ""
-echo "Remote logger object IDs (for localhost:8080 viewer):"
-echo "  - Orchestrator: ${ORCHESTRATOR_LOGGER_ID:-OrchestratorAgent_$(date +%Y)}"
-echo "  - Coder: ${CODER_LOGGER_ID:-CoderAgent_$(date +%Y)}"
+echo "  - WebSocket:    tail -f logs/websocket.log"
+echo "  - Letta bridge: tail -f logs/letta_bridge.log"
+echo "  - Orchestrator: tail -f logs/orchestrator.log"
+echo "  - Coder:        tail -f logs/coder_agent.log"
+echo "  - Tester:       tail -f logs/tester_agent.log"
+echo "  - Jeri:         tail -f logs/jeri_agent.log"
 echo ""
 echo "Chat with orchestrator:"
 echo "  cd agent_messaging && python3 orchestrator_chat.py"

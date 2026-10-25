@@ -9,16 +9,19 @@
 
 ✅ **Root Cause Documentation** - Created comprehensive breakdown in `COMMUNICATION_ISSUES_BREAKDOWN.md`
 
-## Current Status
+## Current Status (updated 2026-05-26)
 
 ### Working ✅
 - WebSocket server running on port 3030
-- All agents started successfully
-- Agents can connect to WebSocket server
+- All agents started via `bash start_all.sh`
+- Jeri end-to-end: send message → task processed → JSON-RPC reply received
+- `send_agent_message.py` rewritten as single async session (no stale-transport errors)
+- Topic routing fixed: Jeri replies on `orchestrator`, watcher reads from there
 
-### Still Has Issues ⚠️
-- **Dual Transport Problem**: Orchestrator uses WebSocket for its messenger, but `inbox()` and `post_message()` functions create new RAG transport instances
-- **Result**: Mixed communication - some via WebSocket, some via RAG
+### Previously Broken, Now Fixed ✅
+- **Dual Transport Problem**: Resolved by `TransportManager` singleton in `transport_manager.py`
+- **Stale asyncio loop**: `send_agent_message.py` rewritten — single `asyncio.run()` per invocation
+- **Wrong WebSocket URL**: `.env` was pointing at Scissari Tailscale IP; corrected to `ws://127.0.0.1:3030`
 
 ## Quick Commands
 
@@ -34,15 +37,17 @@ cd a2a_communicating_agents
 bash stop_all.sh
 ```
 
-### Test WebSocket Connection
+### Test Jeri End-to-End
 ```bash
-/home/adamsl/planner/.venv/bin/python3 \
-  .claude/skills/agent-debug/scripts/test_websocket.py
+so
+cd /home/adamsl
+python3 a2a_communicating_agents/agent_messaging/send_agent_message.py jeri-agent "health check"
 ```
 
 ### Chat with Orchestrator
 ```bash
-cd a2a_communicating_agents/agent_messaging
+so
+cd /home/adamsl/a2a-communicating-agents/agent_messaging
 python3 orchestrator_chat.py
 ```
 

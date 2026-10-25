@@ -8,10 +8,12 @@
 - `tests/`: Agent A/B chat walkthroughs for manual smoke tests; startup helpers like `start_a2a_system.sh` live at the root.
 
 ## Build, Test, and Development Commands
-- `source ../.venv/bin/activate` — reuse the shared virtualenv; pull Letta extras with `pip install -r hybrid_letta_agents/requirements.txt`.
-- `./start_a2a_system.sh` — boots Letta memory, orchestrator, dashboard agent, and the admin UI (logs go to `../logs/`).
+- `so` — shell alias to activate the project venv (`/home/adamsl/a2a-communicating-agents/venv/`). Use this rather than hardcoding a path; there are multiple venvs on this machine.
+- `bash start_all.sh` — **preferred startup**: starts websocket server (waits for :3030), then letta bridge, orchestrator, coder, tester, jeri in order.
+- `bash stop_all.sh` — stop all agents.
 - `python agent_messaging/run_collective.py` — quick discovery + delegation smoke test.
-- `python -m pytest agent_messaging/tests/test_memory_system.py -q`, `pytest hybrid_letta_agents/tests -q`, plus the paired `python tests/test_agent_a.py` / `python tests/test_agent_b.py` runs form the baseline suite.
+- `python -m pytest agent_messaging/tests/test_memory_system.py -q`, plus the paired `python tests/test_agent_a.py` / `python tests/test_agent_b.py` runs form the baseline suite.
+- `cd /home/adamsl && python3 a2a_communicating_agents/agent_messaging/send_agent_message.py jeri-agent "health check"` — test Jeri end-to-end.
 
 ## Coding Style & Naming Conventions
 Target Python 3.11+, PEP 8 formatting (4-space indents, snake_case functions, UpperCamelCase classes), and type hints similar to the current agents. File-level constants stay in ALL_CAPS (see `AGENT_NAME`). Prefer `pathlib.Path` and the existing logging helpers over ad-hoc prints. Inside `hybrid_letta_agents`, keep ES module syntax, two-space indents, and run files through the Vitest tooling in `vitest.config.js`. Name tests descriptively (`test_memory_system.py`, `test_letta_status.js`) and avoid committing generated data under `storage/` or `logs/`.
@@ -26,8 +28,16 @@ Recent commits show short imperative summaries such as `add letta.log to git ign
 Secrets stay in the workspace-level `.env`; never add keys, Chromadb dumps, or log archives to Git. Use `update_config.py` or Task Master commands rather than editing generated config files, and document any new config or dependency (including standard ports 8283/3000) in the nearest README.
 
 ## A2A Runtime Troubleshooting Memory
-- For orchestrator chat stalls, inspect `../logs/websocket.log`, `../logs/orchestrator.log`, and `logs/coder_agent.log` first; if coder broadcasts after the chat timeout, the worker was slow rather than unreachable.
+- Logs land in `./logs/` inside the project root — NOT `../logs/` (some older docs reference the wrong path).
+- For orchestrator chat stalls, inspect `logs/websocket.log`, `logs/orchestrator.log`, and `logs/coder_agent.log` first; if coder broadcasts after the chat timeout, the worker was slow rather than unreachable.
 - Keep trivial coder requests fast in `coder_agent/main.py`; do not send simple hello-world or assembly hello-world prompts through `codex exec` when a deterministic response is enough.
 - Follow-up run questions such as `how do I run it?` must not route to `tester-agent` just because tester has `run_tests`; handle them directly in `orchestrator_agent/main.py` and check self-routing before registered-agent lookup.
 - If `CoderAgent_2026` remains yellow after `Finished processing...`, check `orchestrator_agent/remote_logger.py`; `Finished` must be case-insensitive and idle heartbeats must preserve terminal green/red LED state.
 - Verify viewer registration/data with `/home/adamsl/the-factory/public/index.html` and `curl -s "http://localhost:8080/php-api/object/select?object_view_id=CoderAgent_2026"`.
+
+## Jeri Agent Notes
+- Jeri (`jeri_agent/`) is TypeScript/Node. Build: `cd jeri_agent && npm run build`. Dist at `jeri_agent/dist/index.js`.
+- Jeri subscribes to topic `january-statements` and replies on topic `orchestrator`.
+- Jeri reads files from `~/rol_finances/readable_documents/bank_statements/january/` and writes report artifacts to `~/rol_finances/artifacts/jeri-agent/`.
+- **Critical**: `.env` must have `A2A_WS_URL=ws://127.0.0.1:3030` for local mode. If it contains the Tailscale IP (`100.72.158.63`), Jeri will fail to connect after its first retry cycle.
+- `send_agent_message.py` sends to `january-statements` but reads the reply from `orchestrator` — this is correct behavior, configured via `RESPONSE_TOPIC_MAPPING` in that script.

@@ -4,7 +4,7 @@
 
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VENV_PYTHON="/home/adamsl/planner/nonprofit_finance_db/receipt_scanning_tools/venv/bin/python3"
+VENV_PYTHON="$SCRIPT_DIR/venv/bin/python3"
 LOG_FILE="$SCRIPT_DIR/logs/thought_bridge.log"
 
 mkdir -p "$SCRIPT_DIR/logs"

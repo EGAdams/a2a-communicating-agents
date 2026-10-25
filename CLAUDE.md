@@ -31,17 +31,24 @@ cd agent_messaging && python3 orchestrator_chat.py
 python agent_messaging/run_collective.py
 ```
 
+Only `OPENAI_API_KEY` is hard-required at runtime. All other keys in `.env.example`
+(`ANTHROPIC_API_KEY`, `LETTA_SERVER_URL`, etc.) are optional / transport-specific.
+
 `start_a2a_system.sh` is an older startup path that still references `/home/adamsl/planner/`
 paths and starts a Node dashboard on :3000 + Letta on :8283. Prefer `start_all.sh` for the
 core agent system. Note this directory layout discrepancy: runtime code resolves its own root
 via `PROJECT_ROOT = Path(__file__).resolve().parents[1]`, but several scripts and the `AGENTS.md`
 troubleshooting notes hardcode `/home/adamsl/planner/...` log paths — actual logs land in `./logs/`.
 
+All agents write logs and PID files to `./logs/` inside the project root. Watch all at once
+with `tail -f logs/*.log`.
+
 ### Tests
 
 ```bash
 python -m pytest agent_messaging/tests/test_memory_system.py -q   # memory backends
 python -m pytest orchestrator_agent/tests/test_routing.py -q      # router chain (pure unit, mocked LLM)
+python -m pytest orchestrator_agent/tests/test_remote_logger.py -q  # LED/status-line logic
 pytest -q <path>::<test_name>                                     # single test
 cd jeri_agent && npm run build                                    # TypeScript agent (tsc)
 ```
@@ -98,6 +105,21 @@ Each specialist (`coder_agent/`, `tester_agent/`, `dashboard_agent/`, `jeri_agen
 `A2ACollectiveHub` (`a2a_dispatcher.py`, `a2a_collective.py`) and delegates by posting a
 JSON-RPC payload to the target's topic. `jeri_agent/` is TypeScript/Node (build with `tsc`),
 the rest are Python.
+
+- **`dashboard_agent/`** — ensures the Node dashboard server (`:3000`) is running; monitors
+  and restarts it via subprocess. Uses `requests` for health checks.
+- **`letta_bridge.py`** (top-level, started by `start_all.sh`) — WebSocket ↔ Letta API
+  adapter. Subscribes to the WebSocket bus, forwards task payloads to the Scissari Letta
+  agent, waits for completion, and posts the reply back to the `orchestrator` topic.
+- **`thought_bridge.py`** (top-level, optional) — WebSocket fanout server on `:8765`.
+  Accepts a "producer" connection (lettabot) and fans out `ThoughtEvent` JSON to browser
+  consumer connections. Run separately; not part of `start_all.sh`.
+
+### Import convention
+Runtime modules insert two entries into `sys.path`: the project root (for
+`from rag_system.X import Y`) and its parent (for
+`from a2a_communicating_agents.agent_messaging import …`). The package name used for
+cross-module absolute imports is `a2a_communicating_agents`.
 
 ### Memory (`agent_messaging/` + `rag_system/`)
 Unified memory behind a `MemoryBackend` interface with two backends — `LettaMemory` and
